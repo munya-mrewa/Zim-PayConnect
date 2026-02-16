@@ -79,7 +79,7 @@ export function HeroSection() {
           </p>
 
           <div ref={buttonsRef} className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8 opacity-0">
-            <Link href="/register">
+            <Link href="#pricing">
               <Button size="lg" variant="luxury" className="min-w-[200px]">
                 Start 3-Day Free Trial
               </Button>

@@ -82,7 +82,7 @@ export function SiteHeader() {
               <Link href="/login">
                 <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white hover:bg-white/10">Login</Button>
               </Link>
-              <Link href="/register">
+              <Link href="/#pricing">
                 <Button size="sm" className="bg-white text-black font-semibold hover:bg-zinc-100 hover:scale-105 transition-all shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:shadow-[0_0_25px_rgba(255,255,255,0.5)] border border-transparent hover:border-white/50">Get Started</Button>
               </Link>
             </>
@@ -132,7 +132,7 @@ export function SiteHeader() {
               Login
             </Link>
             <Link
-              href="/register"
+              href="/#pricing"
               className="text-lg font-medium text-white transition-colors"
               onClick={() => setIsOpen(false)}
             >
