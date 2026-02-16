@@ -1,0 +1,149 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Accounts
+// Stores authentication and profile details.
+// NO payroll data or PII associated with employees is stored here.
+model User {
+  id             String        @id @default(cuid())
+  email          String        @unique
+  hashedPassword String?
+  fullName       String?
+  role           UserRole      @default(ADMIN)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  
+  // Two-Factor Auth
+  twoFactorEnabled Boolean     @default(false)
+  twoFactorToken   String?
+  twoFactorExpires DateTime?
+
+  // Password Reset
+  resetToken       String?
+  resetTokenExpires DateTime?
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  auditLogs      AuditLog[]
+
+  @@index([organizationId])
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  VIEWER
+}
+
+// Organization Details
+// Stores company metadata required for header generation in reports.
+model Organization {
+  id            String   @id @default(cuid())
+  name          String
+  tin           String?  // Taxpayer Identification Number (Company level only)
+  address       String?
+  contactEmail  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Tax Configuration
+  defaultCurrency String   @default("USD")
+  
+  // NSSA (National Social Security Authority)
+  nssaEnabled     Boolean  @default(true)
+  nssaRate        Decimal  @default(0.045) @db.Decimal(5, 4)
+  nssaCeilingUSD  Decimal  @default(700.00) @db.Decimal(10, 2)
+  nssaCeilingZiG  Decimal  @default(19600.00) @db.Decimal(12, 2)
+
+  // NEC (National Employment Council)
+  necEnabled      Boolean  @default(false)
+  necRate         Decimal  @default(0.0) @db.Decimal(5, 4)
+
+  // SDF (Standards Development Fund)
+  sdfEnabled      Boolean  @default(true)
+  sdfRate         Decimal  @default(0.01) @db.Decimal(5, 4)
+
+  // Branding & Credits
+  logoUrl         String?  // URL to custom logo (Agency/Enterprise only)
+  credits         Int      @default(0) // Pay-per-process credits
+
+  // Subscription Details
+  subscriptionTier   String   @default("MICRO") // MICRO, BUSINESS, AGENCY, ENTERPRISE
+  subscriptionStatus String   @default("TRIAL") // TRIAL, ACTIVE, PAST_DUE, CANCELLED
+  trialEndsAt        DateTime @default(dbgenerated("NOW() + interval '3 days'"))
+  subscriptionEndsAt DateTime?
+  gracePeriodEndsAt  DateTime? // Grace period for manual renewal
+  paynowPollUrl      String?
+
+  // Recurring Payments (Pesepay)
+  pesepayToken       String?  // Token for recurring payments
+  autoRenew          Boolean  @default(false)
+
+  users         User[]
+  auditLogs     AuditLog[]
+}
+
+// Exchange Rates
+// Caches RBZ (Reserve Bank of Zimbabwe) rates for ZiG/USD conversions.
+// Updated periodically via external job or manual input.
+model ExchangeRate {
+  id            String   @id @default(cuid())
+  currencyPair  String   @default("USD_ZIG") // e.g., 1 USD = x ZiG
+  rate          Decimal  @db.Decimal(10, 4)
+  effectiveDate DateTime @default(now())
+  source        String?  // e.g., "RBZ API", "Manual"
+  createdAt     DateTime @default(now())
+  
+  @@index([effectiveDate])
+}
+
+// Audit Logs
+// CRITICAL: Records *that* processing happened, but NOT the content.
+// Tracks usage, performance, and compliance actions.
+// "processedRecordsCount" verifies volume without storing names.
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id])
+  
+  action         AuditAction
+  status         AuditStatus
+  
+  fileName       String?  // Original filename (sanitized)
+  fileSize       Int?     // Bytes
+  recordCount    Int?     // Number of rows processed
+  
+  metadata       Json?    // e.g., { "processingTimeMs": 150, "errors": 0 }
+  
+  createdAt      DateTime @default(now())
+  ipAddress      String?
+
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  UPLOAD_PAYROLL
+  GENERATE_REPORT
+  UPDATE_SETTINGS
+  PURCHASE_CREDIT
+}
+
+enum AuditStatus {
+  SUCCESS
+  FAILURE
+  WARNING
+}

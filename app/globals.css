@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+ 
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+ 
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+ 
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+ 
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+ 
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+ 
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+ 
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 10% 3.9%;
+ 
+    --radius: 0.75rem;
+  }
+ 
+  .dark {
+    /* Luxury Dark Theme - Deep Gunmetal & Platinum */
+    --background: 225 6% 8%; /* #111317 - Deep rich charcoal */
+    --foreground: 210 20% 98%;
+ 
+    --card: 225 6% 10%;
+    --card-foreground: 210 20% 98%;
+ 
+    --popover: 225 6% 10%;
+    --popover-foreground: 210 20% 98%;
+ 
+    --primary: 210 20% 98%; /* Platinum/White */
+    --primary-foreground: 225 6% 8%;
+ 
+    --secondary: 225 6% 15%;
+    --secondary-foreground: 210 20% 98%;
+ 
+    --muted: 225 6% 15%;
+    --muted-foreground: 215 15% 65%;
+ 
+    --accent: 225 6% 15%;
+    --accent-foreground: 210 20% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 20% 98%;
+ 
+    --border: 225 6% 18%;
+    --input: 225 6% 18%;
+    --ring: 225 6% 40%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-white selection:text-black;
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
