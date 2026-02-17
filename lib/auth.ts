@@ -78,24 +78,30 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
+        const org = await db.organization.findUnique({
+          where: { id: user.organizationId! }
+        });
+
         return {
           id: user.id,
-          email: user.email,
           name: user.fullName,
+          email: user.email,
           role: user.role,
-          organizationId: user.organizationId || "", // Provide default if null, but schema implies user belongs to org? 
-          // Assuming user.organizationId can be null in DB but strictly we handle it.
+          organizationId: user.organizationId || "",
+          subscriptionStatus: org?.subscriptionStatus,
+          trialEndsAt: org?.trialEndsAt?.toISOString(),
         };
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
-      console.log("JWT Callback Triggered:", { token: token?.sub, user: user?.email });
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
         token.organizationId = (user as any).organizationId;
+        token.subscriptionStatus = (user as any).subscriptionStatus;
+        token.trialEndsAt = (user as any).trialEndsAt;
       }
       return token;
     },
@@ -104,6 +110,8 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.organizationId = token.organizationId as string;
+        (session.user as any).subscriptionStatus = token.subscriptionStatus;
+        (session.user as any).trialEndsAt = token.trialEndsAt;
       }
       return session;
     },

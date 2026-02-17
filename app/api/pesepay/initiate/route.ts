@@ -75,6 +75,15 @@ export async function POST(req: Request) {
     }
   } catch (error) {
     console.error("Payment Initiation Error:", error);
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const logPath = path.join(process.cwd(), 'pesepay_error.log');
+      const errorMessage = error instanceof Error ? error.stack || error.message : String(error);
+      fs.appendFileSync(logPath, `[${new Date().toISOString()}] ${errorMessage}\n`);
+    } catch (logError) {
+      console.error("Failed to write error log:", logError);
+    }
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

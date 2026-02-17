@@ -9,12 +9,16 @@ declare module "next-auth" {
       id: string
       role: string
       organizationId: string
+      subscriptionStatus?: string
+      trialEndsAt?: string
     } & DefaultSession["user"]
   }
 
   interface User {
     role: string
     organizationId: string
+    subscriptionStatus?: string
+    trialEndsAt?: string
   }
 }
 
@@ -23,5 +27,7 @@ declare module "next-auth/jwt" {
     id: string
     role: string
     organizationId: string
+    subscriptionStatus?: string
+    trialEndsAt?: string
   }
 }
