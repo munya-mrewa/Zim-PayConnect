@@ -133,7 +133,7 @@ export default function UserGuidePage() {
           Join hundreds of Zimbabwean businesses using the most secure, compliant, and ephemeral payroll engine.
         </p>
         <Link href="/register">
-          <Button size="lg" className="w-full sm:w-auto">Create Free Account</Button>
+          <Button size="lg" variant="luxury" className="w-full sm:w-auto min-w-[200px]">Create Free Account</Button>
         </Link>
       </div>
     </div>
