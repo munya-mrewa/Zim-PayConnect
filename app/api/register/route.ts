@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { message: "Something went wrong!" },
+      { message: `Something went wrong: ${error instanceof Error ? error.message : String(error)}` },
       { status: 500 }
     );
   }
