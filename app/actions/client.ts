@@ -75,21 +75,20 @@ export async function createClient(data: ClientData) {
       where: { organizationId: org.id },
     });
 
-    const maxClients = plan.maxClientTins || 0; // Default to 0 if not specified (e.g. Micro/Business don't have this feature)
+    // Enterprise check - Unlimited
+    if (org.subscriptionTier === 'ENTERPRISE') {
+         // Proceed
+    } else {
+        const maxClients = plan.maxClientTins || 0;
+        const extraSlots = org.extraClientSlots || 0;
+        const totalLimit = maxClients + extraSlots;
 
-    // Allow unlimited if specified (though type is number | undefined, usually Agency has 5)
-    // If the plan doesn't support clients (maxClientTins is undefined), we should probably block it
-    // unless we interpret undefined as 0. The interface says `maxClientTins?: number`.
-    
-    // Let's assume if it's undefined, they can't add clients (feature not available).
-    // Or maybe we allow 1 by default? No, the requirement says "5 Client TINs" for Agency.
-    // The prompt implies this feature is for "Client Management".
-    
-    if (currentClientCount >= maxClients) {
-      return {
-        success: false,
-        error: `Plan limit reached. Your ${plan.name} plan allows ${maxClients} clients. Please upgrade to add more.`
-      };
+        if (currentClientCount >= totalLimit) {
+          return {
+            success: false,
+            error: `Plan limit reached. Your ${plan.name} plan allows ${totalLimit} clients. Please purchase extra slots.`
+          };
+        }
     }
 
     const client = await db.client.create({

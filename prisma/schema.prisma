@@ -77,6 +77,7 @@ model Organization {
   // Branding & Credits
   logoUrl         String?  // URL to custom logo (Agency/Enterprise only)
   credits         Int      @default(0) // Pay-per-process credits
+  extraClientSlots Int     @default(0) // Purchased extra slots for clients
 
   // Subscription Details
   subscriptionTier   String   @default("MICRO") // MICRO, BUSINESS, AGENCY, ENTERPRISE

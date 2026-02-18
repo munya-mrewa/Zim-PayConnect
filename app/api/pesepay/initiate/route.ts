@@ -12,7 +12,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { planId, orgId } = await req.json();
+    const { planId, orgId, type, quantity } = await req.json();
 
     if (!orgId) {
        return NextResponse.json({ error: "Organization ID required" }, { status: 400 });
@@ -34,12 +34,27 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId);
-    if (!plan) {
-      return NextResponse.json({ error: "Invalid Plan" }, { status: 400 });
-    }
+    let amount = 0;
+    let description = "";
+    let reference = "";
 
-    const reference = `${orgId}|${planId}|${Date.now()}`;
+    if (type === "EXTRA_CLIENT") {
+        amount = 15;
+        description = "Extra Client Slot (Agency)";
+        reference = `${orgId}|EXTRA_CLIENT|${Date.now()}`;
+    } else if (type === "CREDIT") {
+        amount = 5 * (quantity || 1); // $5 per credit
+        description = `Pay-Per-Process Credits (${quantity || 1})`;
+        reference = `${orgId}|CREDIT|${quantity || 1}`;
+    } else {
+        const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId);
+        if (!plan) {
+          return NextResponse.json({ error: "Invalid Plan" }, { status: 400 });
+        }
+        amount = plan.price;
+        description = `Subscription: ${plan.name}`;
+        reference = `${orgId}|${planId}|${Date.now()}`;
+    }
 
     const pesepay = getPesepay();
     
@@ -47,15 +62,14 @@ export async function POST(req: Request) {
     const appUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
     pesepay.returnUrl = `${appUrl}/dashboard?payment=success`;
     
-    // Pesepay requires a publicly accessible URL for the webhook (resultUrl).
     if (appUrl.includes("localhost")) {
-        pesepay.resultUrl = `${appUrl}/api/webhooks/pesepay`; // Placeholder
+        pesepay.resultUrl = `${appUrl}/api/webhooks/pesepay`; 
         console.warn("Using placeholder Result URL for Pesepay (Localhost detected). Webhooks will not be received.");
     } else {
         pesepay.resultUrl = `${appUrl}/api/webhooks/pesepay`;
     }
 
-    const transaction = pesepay.createTransaction(plan.price, "USD", `Subscription: ${plan.name}`, reference);
+    const transaction = pesepay.createTransaction(amount, "USD", description, reference);
 
     const response = await pesepay.initiateTransaction(transaction);
 
@@ -65,7 +79,6 @@ export async function POST(req: Request) {
         where: { id: orgId },
         data: {
           paynowPollUrl: response.pollUrl,
-          // We don't update status yet, we wait for webhook or poll
         },
       });
 
@@ -75,15 +88,6 @@ export async function POST(req: Request) {
     }
   } catch (error) {
     console.error("Payment Initiation Error:", error);
-    try {
-      const fs = require('fs');
-      const path = require('path');
-      const logPath = path.join(process.cwd(), 'pesepay_error.log');
-      const errorMessage = error instanceof Error ? error.stack || error.message : String(error);
-      fs.appendFileSync(logPath, `[${new Date().toISOString()}] ${errorMessage}\n`);
-    } catch (logError) {
-      console.error("Failed to write error log:", logError);
-    }
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

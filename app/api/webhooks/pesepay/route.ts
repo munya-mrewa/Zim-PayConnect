@@ -6,8 +6,6 @@ import { getPlanById } from "@/lib/config/pricing";
 export async function POST(req: Request) {
   try {
     // Pesepay webhook handling
-    // We attempt to read as form data (x-www-form-urlencoded) similar to PayNow
-    // or JSON if that fails/is empty.
     const text = await req.text();
     let pollUrl: string | null = null;
     let reference: string | null = null;
@@ -36,14 +34,14 @@ export async function POST(req: Request) {
     const response = await pesepay.pollTransaction(pollUrl);
 
     if (response.paid) {
-      // Parse reference: OrgID | TierID | ...
+      // Parse reference: OrgID | TierID/Type | Qty/Timestamp
       const parts = reference.split("|");
       if (parts.length < 2) {
         console.error("Invalid reference format:", reference);
         return new NextResponse("Invalid reference format", { status: 400 });
       }
 
-      const [orgId, typeOrTier, qtyOrTimestamp] = parts;
+      const [orgId, typeOrTier, param3] = parts;
 
       const org = await db.organization.findUnique({
         where: { id: orgId },
@@ -55,7 +53,7 @@ export async function POST(req: Request) {
 
       // Handle Credit Purchase
       if (typeOrTier === "CREDIT") {
-         const qty = parseInt(qtyOrTimestamp || "1", 10);
+         const qty = parseInt(param3 || "1", 10);
          
          await db.organization.update({
             where: { id: orgId },
@@ -77,10 +75,31 @@ export async function POST(req: Request) {
 
          console.log(`Credits (${qty}) added for Org ${orgId}`);
 
+      } else if (typeOrTier === "EXTRA_CLIENT") {
+          // Handle Extra Client Slot
+          await db.organization.update({
+              where: { id: orgId },
+              data: {
+                  extraClientSlots: { increment: 1 },
+                  paynowPollUrl: null
+              }
+          });
+
+          await db.auditLog.create({
+            data: {
+                organizationId: orgId,
+                action: "UPDATE_SETTINGS", // Or similar
+                status: "SUCCESS",
+                metadata: { description: "Purchased Extra Client Slot", gateway: "PESEPAY" }
+            }
+         });
+         console.log(`Extra Client Slot added for Org ${orgId}`);
+
       } else {
          // Handle Subscription Purchase (Standard)
           const tierId = typeOrTier;
           const plan = getPlanById(tierId);
+          
           if (!plan) {
             console.error("Unknown plan in reference:", tierId);
             return new NextResponse("Unknown plan", { status: 400 });
