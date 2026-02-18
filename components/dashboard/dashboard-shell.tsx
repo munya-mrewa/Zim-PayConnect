@@ -15,7 +15,8 @@ import {
   Calculator,
   AlertTriangle,
   Clock,
-  Building2
+  Building2,
+  Terminal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ export type SubscriptionStatus = {
   status: 'TRIAL' | 'ACTIVE' | 'EXPIRED' | 'PAST_DUE' | 'CANCELLED';
   daysLeft?: number;
   message?: string;
+  tier?: string;
 };
 
 interface DashboardShellProps {
@@ -54,6 +56,10 @@ export function DashboardShell({
     { href: "/history", label: "History", icon: History },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
+
+  if (['ENTERPRISE', 'AGENCY'].includes(subscriptionStatus.tier || '')) {
+    navItems.push({ href: "/settings/developer", label: "Developer", icon: Terminal });
+  }
 
   const handleSignOut = () => {
     signOut({ callbackUrl: "/login" });

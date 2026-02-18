@@ -60,7 +60,8 @@ export default async function DashboardLayout({
 
   const subscriptionStatus: SubscriptionStatus = {
       status,
-      daysLeft
+      daysLeft,
+      tier: org.subscriptionTier
   };
 
   return (
