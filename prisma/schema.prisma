@@ -89,7 +89,29 @@ model Organization {
   autoRenew          Boolean  @default(false)
 
   users         User[]
+  clients       Client[]
   auditLogs     AuditLog[]
+}
+
+// Client Profiles (Agency/Enterprise)
+// Allows managing multiple entities under one account.
+model Client {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  name           String
+  tin            String?      // Taxpayer Identification Number
+  email          String?
+  address        String?
+  phoneNumber    String?
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  // Ensure unique TIN per organization if TIN is provided
+  @@unique([organizationId, tin])
 }
 
 // Exchange Rates

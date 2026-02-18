@@ -14,7 +14,8 @@ import {
   X,
   Calculator,
   AlertTriangle,
-  Clock
+  Clock,
+  Building2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,7 @@ export function DashboardShell({
 
   const navItems = [
     { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+    { href: "/clients", label: "Clients", icon: Building2 },
     { href: "/upload", label: "Upload Payroll", icon: Upload },
     { href: "/calculator", label: "Tax Calculator", icon: Calculator },
     { href: "/history", label: "History", icon: History },
