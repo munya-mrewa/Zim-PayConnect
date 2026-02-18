@@ -8,6 +8,9 @@ import { PasswordForm } from "./password-form";
 import { TaxSettingsForm } from "./tax-settings-form";
 import { BrandingForm } from "./branding-form";
 
+import { AccountManagerCard } from "./account-manager-card";
+import { SlaReportDownloadButton } from "@/components/reports/sla-download-button";
+
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions);
 
@@ -17,7 +20,13 @@ export default async function SettingsPage() {
 
   const user = await db.user.findUnique({
     where: { id: session.user.id },
-    include: { organization: true },
+    include: { 
+      organization: {
+        include: {
+          accountManager: true
+        }
+      }
+    },
   });
 
   if (!user || !user.organization) {
@@ -35,6 +44,20 @@ export default async function SettingsPage() {
       </div>
 
       <div className="grid gap-8">
+         {user.organization.accountManager && (
+            <AccountManagerCard manager={user.organization.accountManager} />
+         )}
+
+         {user.organization.subscriptionTier === 'ENTERPRISE' && (
+             <div className="rounded-md border p-4 bg-card">
+                 <h3 className="text-lg font-medium mb-2">Enterprise Compliance</h3>
+                 <p className="text-sm text-muted-foreground mb-4">
+                     Access your guaranteed Service Level Agreement (SLA) reports and uptime statistics.
+                 </p>
+                 <SlaReportDownloadButton />
+             </div>
+         )}
+
          <SettingsForm 
             initialData={{
                 name: user.organization.name,

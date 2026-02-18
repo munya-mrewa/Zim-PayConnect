@@ -13,9 +13,11 @@ export async function middleware(req: NextRequest) {
     "/upload",
     "/history",
     "/calculator",
+    "/admin",
     "/api/ephemeral",
     "/api/upload-logo",
-    "/api/history"
+    "/api/history",
+    "/api/settings"
   ];
 
   const isProtected = protectedPaths.some((path) => 
@@ -59,9 +61,11 @@ export const config = {
     "/upload/:path*",
     "/history/:path*",
     "/calculator/:path*",
+    "/admin/:path*",
     "/api/ephemeral/:path*", 
     "/api/upload-logo/:path*",
     "/api/history/:path*",
+    "/api/settings/:path*",
     // Explicitly exclude api/auth from matcher just in case, though the list above should cover it.
   ],
 };

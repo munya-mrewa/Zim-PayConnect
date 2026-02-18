@@ -32,7 +32,8 @@ model User {
   resetTokenExpires DateTime?
 
   organizationId String?
-  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organization   Organization? @relation("OrganizationUsers", fields: [organizationId], references: [id])
+  managedOrganizations Organization[] @relation("AccountManager")
   auditLogs      AuditLog[]
 
   @@index([organizationId])
@@ -42,6 +43,7 @@ enum UserRole {
   OWNER
   ADMIN
   VIEWER
+  SUPPORT_AGENT
 }
 
 // Organization Details
@@ -88,9 +90,70 @@ model Organization {
   pesepayToken       String?  // Token for recurring payments
   autoRenew          Boolean  @default(false)
 
-  users         User[]
+  // Account Manager (Enterprise)
+  accountManagerId String?
+  accountManager   User?   @relation("AccountManager", fields: [accountManagerId], references: [id])
+
+  users         User[]       @relation("OrganizationUsers")
   clients       Client[]
   auditLogs     AuditLog[]
+  apiKeys       ApiKey[]
+  webhooks      WebhookEndpoint[]
+}
+
+// API Keys (Enterprise)
+model ApiKey {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  name           String
+  keyPrefix      String       // Store first few chars for display
+  hashedKey      String       @unique // Store hash of the full key
+  scopes         String[]     // e.g. ["payroll:read", "payroll:write"]
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+}
+
+// Webhooks (Enterprise)
+model WebhookEndpoint {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  url            String
+  secret         String?      // Signing secret
+  events         String[]     // ["payroll.processed", "report.generated"]
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  deliveries     WebhookDelivery[]
+
+  @@index([organizationId])
+}
+
+model WebhookDelivery {
+  id                String          @id @default(cuid())
+  webhookEndpointId String
+  webhookEndpoint   WebhookEndpoint @relation(fields: [webhookEndpointId], references: [id], onDelete: Cascade)
+  
+  eventId           String
+  eventType         String
+  payload           Json
+  
+  responseStatus    Int?
+  responseBody      String?
+  durationMs        Int?
+  success           Boolean         @default(false)
+  
+  createdAt         DateTime        @default(now())
+
+  @@index([webhookEndpointId])
 }
 
 // Client Profiles (Agency/Enterprise)
