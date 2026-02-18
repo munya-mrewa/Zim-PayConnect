@@ -78,9 +78,12 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        const org = await db.organization.findUnique({
-          where: { id: user.organizationId! }
-        });
+        let org = null;
+        if (user.organizationId) {
+          org = await db.organization.findUnique({
+            where: { id: user.organizationId }
+          });
+        }
 
         return {
           id: user.id,
