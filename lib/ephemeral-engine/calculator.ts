@@ -24,10 +24,12 @@ export function calculateTax(record: RawPayrollRecord, config: Partial<TaxConfig
   }
 
   // 1. Calculate NSSA (Pension)
-  // Usually exempt for Casuals unless configured otherwise.
-  // Default: Enabled for Permanent, Disabled for Casual unless forced.
-  const nssaDefault = record.isPermanent; 
-  const nssaEnabled = config.nssaEnabled ?? nssaDefault;
+  // Enforce exemption for Casuals (FLAT method) unless explicitly overridden (future-proof)
+  // Currently, we assume Flat Rate Casuals do NOT pay NSSA/NEC.
+  const isCasual = method === "FLAT";
+  
+  const nssaConfigured = config.nssaEnabled ?? true; // Default to true if not passed
+  const nssaEnabled = isCasual ? false : nssaConfigured; // Casuals exempt by default
   
   let nssa = 0;
   if (nssaEnabled) {
@@ -36,7 +38,9 @@ export function calculateTax(record: RawPayrollRecord, config: Partial<TaxConfig
   }
 
   // 2. Calculate NEC
-  const necEnabled = config.necEnabled ?? NEC_CONFIG.rate > 0;
+  const necConfigured = config.necEnabled ?? NEC_CONFIG.rate > 0;
+  const necEnabled = isCasual ? false : necConfigured; // Casuals exempt by default
+  
   let nec = 0;
   if (necEnabled) {
       nec = grossIncome * necRate;
@@ -51,8 +55,7 @@ export function calculateTax(record: RawPayrollRecord, config: Partial<TaxConfig
 
   if (method === "FLAT") {
       // Casual / Flat Rate Logic
-      // Usually applied on Gross for informal, but Taxable for formal casuals. 
-      // We'll use Taxable to be fair/consistent with deductions if any exist.
+      // Applied on Taxable Income (which is == Gross if NSSA/NEC are 0)
       paye = taxableIncome * casualRate;
   } else if (method === "FDS") {
       // FDS (Cumulative) Logic
