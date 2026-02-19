@@ -59,6 +59,5 @@ export function generateGLCSV(records: FullRecord[], orgName: string): string {
   lines.push(`${today},${reference},NEC Payable,,0.00,${totalNEC_Payable.toFixed(2)}`);
   lines.push(`${today},${reference},SDF Payable,,0.00,${totalSDF_Employer.toFixed(2)}`);
 
-  return lines.join("
-");
+  return lines.join("\n");
 }

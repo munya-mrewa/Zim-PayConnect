@@ -79,6 +79,11 @@ model Organization {
   credits         Int      @default(0) // Pay-per-process credits
   extraClientSlots Int     @default(0) // Purchased extra slots for clients
 
+  // Exchange Rate Settings
+  autoUpdateRates     Boolean   @default(false)
+  currentExchangeRate Decimal   @default(28.0000) @db.Decimal(10, 4)
+  lastRateUpdate      DateTime?
+
   // Subscription Details
   subscriptionTier   String   @default("MICRO") // MICRO, BUSINESS, AGENCY, ENTERPRISE
   subscriptionStatus String   @default("TRIAL") // TRIAL, ACTIVE, PAST_DUE, CANCELLED
