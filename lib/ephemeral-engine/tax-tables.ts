@@ -1,30 +1,31 @@
 // ZIMRA Tax Tables for 2025/2026
-// Source: ZIMRA Public Notices & Statutory Instruments (Placeholder structures based on standard progressive tax)
+// Source: ZIMRA 2025 Tax Tables (USD unchanged from 2024; ZiG introduced April 2024 mirrored at ~28x)
 
 export interface TaxBracket {
   lower: number;
   upper: number;
   rate: number;
-  deduction: number; // Cumulative deduction to simplify calc
+  deduction: number; // Unused in current calculator logic (cumulative method), kept for reference
 }
 
 // USD Tax Tables (Monthly)
 export const USD_TAX_TABLE_2025: TaxBracket[] = [
   { lower: 0, upper: 100, rate: 0, deduction: 0 },
   { lower: 100, upper: 300, rate: 0.20, deduction: 0 }, // 20%
-  { lower: 300, upper: 1000, rate: 0.25, deduction: 15 }, // Example deduction logic
-  { lower: 1000, upper: 3000, rate: 0.30, deduction: 65 },
-  { lower: 3000, upper: Infinity, rate: 0.40, deduction: 365 }
+  { lower: 300, upper: 1000, rate: 0.25, deduction: 0 }, // 25%
+  { lower: 1000, upper: 2000, rate: 0.30, deduction: 0 }, // 30%
+  { lower: 2000, upper: 3000, rate: 0.35, deduction: 0 }, // 35%
+  { lower: 3000, upper: Infinity, rate: 0.40, deduction: 0 } // 40%
 ];
 
-// ZiG Tax Tables (Monthly) - Hypothetical 2025/2026 values
-// Exchange rate volatility often leads to adjustments.
+// ZiG Tax Tables (Monthly) - Based on ZiG 2025 Gazette (Mirrors USD at ~28.0)
 export const ZIG_TAX_TABLE_2025: TaxBracket[] = [
   { lower: 0, upper: 2800, rate: 0, deduction: 0 },
   { lower: 2800, upper: 8400, rate: 0.20, deduction: 0 },
-  { lower: 8400, upper: 28000, rate: 0.25, deduction: 420 },
-  { lower: 28000, upper: 84000, rate: 0.30, deduction: 1820 },
-  { lower: 84000, upper: Infinity, rate: 0.40, deduction: 10220 }
+  { lower: 8400, upper: 28000, rate: 0.25, deduction: 0 },
+  { lower: 28000, upper: 56000, rate: 0.30, deduction: 0 },
+  { lower: 56000, upper: 84000, rate: 0.35, deduction: 0 },
+  { lower: 84000, upper: Infinity, rate: 0.40, deduction: 0 }
 ];
 
 // NSSA Limits (Monthly)
@@ -32,7 +33,7 @@ export const ZIG_TAX_TABLE_2025: TaxBracket[] = [
 export const NSSA_CONFIG = {
   rate: 0.045, // 4.5%
   usdCeiling: 700, // Insurable earnings ceiling
-  zigCeiling: 19600 // Equivalent ~28x or prevailing rate
+  zigCeiling: 19600 // Equivalent ~28x (700 * 28)
 };
 
 // NEC (National Employment Council) - Varies by Industry
@@ -44,8 +45,8 @@ export const NEC_CONFIG = {
 
 // Casual / Non-FDS Configuration
 export const CASUAL_CONFIG = {
-  rate: 0.20, // 20% Flat Rate
-  exemptFromNSSA: true // Often casuals don't pay NSSA if short-term, strictly configurable
+  rate: 0.20, // 20% Flat Rate (Withholding Tax)
+  exemptFromNSSA: true // Casuals strictly exempt by default
 };
 
 // AIDS Levy
