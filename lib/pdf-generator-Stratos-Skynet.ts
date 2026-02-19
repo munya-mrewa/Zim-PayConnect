@@ -98,31 +98,46 @@ export async function generatePayslipPDF(record: FullRecord, orgName: string, lo
 
 export async function generateBatchZip(records: FullRecord[], orgName: string, logoUrl?: string | null, tin?: string): Promise<Blob> {
   const zip = new JSZip();
-  const folder = zip.folder(`Payslips-${new Date().toISOString().split('T')[0]}`);
+  const rootFolder = zip.folder(`Payslips-${new Date().toISOString().split('T')[0]}`);
 
-  // Generate individual PDFs
-  for (const record of records) {
-    const pdfBuffer = await generatePayslipPDF(record, orgName, logoUrl);
-    const fileName = `${record.name.replace(/[^a-z0-9]/gi, '_')}_${record.employeeId}.pdf`;
-    folder?.file(fileName, pdfBuffer);
-  }
+  // Split records
+  const fdsRecords = records.filter(r => r.isPermanent !== false); // Default to true
+  const nonFdsRecords = records.filter(r => r.isPermanent === false);
 
-  // Generate CSV Summary
-  let csvContent = `EmployeeID,Name,Gross,NSSA,NEC,Taxable,PAYE,AIDS_Levy,NetPay,SDF_Employer
+  const fdsFolder = fdsRecords.length > 0 ? rootFolder?.folder("FDS_Permanent") : null;
+  const nonFdsFolder = nonFdsRecords.length > 0 ? rootFolder?.folder("Non_FDS_Casual") : null;
+
+  // Helper to generate files for a batch
+  const processBatch = async (batch: FullRecord[], folder: JSZip | null | undefined, summaryName: string) => {
+    if (!batch.length || !folder) return;
+
+    // PDFs
+    for (const record of batch) {
+      const pdfBuffer = await generatePayslipPDF(record, orgName, logoUrl);
+      const fileName = `${record.name.replace(/[^a-z0-9]/gi, '_')}_${record.employeeId}.pdf`;
+      folder.file(fileName, pdfBuffer);
+    }
+
+    // CSV Summary
+    let csvContent = `EmployeeID,Name,Gross,NSSA,NEC,Taxable,PAYE,AIDS_Levy,NetPay,SDF_Employer
 `;
-  records.forEach(r => {
-    const t = r.taxResult;
-    csvContent += `${r.employeeId},${r.name},${t.grossIncome},${t.nssa},${t.nec || 0},${t.taxableIncome},${t.paye},${t.aidsLevy},${t.netPay},${t.sdf || 0}
+    batch.forEach(r => {
+      const t = r.taxResult;
+      csvContent += `${r.employeeId},${r.name},${t.grossIncome.toFixed(2)},${t.nssa.toFixed(2)},${(t.nec || 0).toFixed(2)},${t.taxableIncome.toFixed(2)},${t.paye.toFixed(2)},${t.aidsLevy.toFixed(2)},${t.netPay.toFixed(2)},${(t.sdf || 0).toFixed(2)}
 `;
-  });
-  
-  folder?.file("Payroll_Summary.csv", csvContent);
+    });
+    folder.file(summaryName, csvContent);
+  };
 
-  // Generate ZIMRA XML Return
+  // Process both batches
+  await processBatch(fdsRecords, fdsFolder, "FDS_Summary.csv");
+  await processBatch(nonFdsRecords, nonFdsFolder, "Non_FDS_Summary.csv");
+
+  // Generate ZIMRA XML Return (Combined)
   if (tin) {
       try {
           const xmlContent = generateZimraXml(records, orgName, tin);
-          folder?.file("Zimra_Return_XML.xml", xmlContent);
+          rootFolder?.file("Zimra_Return_XML.xml", xmlContent);
       } catch (e) {
           console.warn("Failed to generate ZIMRA XML", e);
       }
