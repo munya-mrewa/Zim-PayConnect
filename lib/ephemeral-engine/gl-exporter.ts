@@ -2,7 +2,9 @@ import { TaxResult, RawPayrollRecord } from "./types";
 
 type FullRecord = RawPayrollRecord & { taxResult: TaxResult };
 
-export function generateGLCSV(records: FullRecord[], orgName: string): string {
+export type GLFormat = "STANDARD" | "SAGE" | "QUICKBOOKS";
+
+export function generateGLCSV(records: FullRecord[], orgName: string, format: GLFormat = "STANDARD"): string {
   // 1. Aggregates
   let totalBasic = 0;
   let totalAllowances = 0;
@@ -37,27 +39,47 @@ export function generateGLCSV(records: FullRecord[], orgName: string): string {
 
   const today = new Date().toISOString().split('T')[0];
   const reference = `PAYROLL-${today}`;
+  const period = new Date().getMonth() + 1; // Sage Period (1-12)
 
   // 2. Journal Entries (Double Entry)
-  // Format: Date, Reference, Description, AccountCode (Placeholder), Debit, Credit
   
-  const lines = [
-      `Date,Reference,Description,Account,Debit,Credit`
-  ];
+  let header = "";
+  let rows: string[] = [];
+
+  const addRow = (desc: string, debit: number, credit: number) => {
+      if (format === "SAGE") {
+          // Period,Date,Reference,Description,Account,Debit,Credit,TaxType
+          rows.push(`${period},${today},${reference},${desc},,${debit.toFixed(2)},${credit.toFixed(2)},00`);
+      } else if (format === "QUICKBOOKS") {
+          // Date,RefNumber,Account,Memo,Debit,Credit
+          rows.push(`${today},${reference},,${desc},${debit.toFixed(2)},${credit.toFixed(2)}`);
+      } else {
+          // STANDARD: Date,Reference,Description,Account,Debit,Credit
+          rows.push(`${today},${reference},${desc},,${debit.toFixed(2)},${credit.toFixed(2)}`);
+      }
+  };
+
+  if (format === "SAGE") {
+      header = `Period,Date,Reference,Description,Account,Debit,Credit,TaxType`;
+  } else if (format === "QUICKBOOKS") {
+      header = `Date,RefNumber,Account,Memo,Debit,Credit`;
+  } else {
+      header = `Date,Reference,Description,Account,Debit,Credit`;
+  }
 
   // DEBITS (Expenses)
-  lines.push(`${today},${reference},Salaries & Wages Expense,,${totalGross.toFixed(2)},0.00`);
-  lines.push(`${today},${reference},Employer NSSA Expense,,${totalNSSA_Employer.toFixed(2)},0.00`);
-  lines.push(`${today},${reference},Employer NEC Expense,,${totalNEC_Employer.toFixed(2)},0.00`);
-  lines.push(`${today},${reference},SDF Expense,,${totalSDF_Employer.toFixed(2)},0.00`);
+  addRow("Salaries & Wages Expense", totalGross, 0);
+  addRow("Employer NSSA Expense", totalNSSA_Employer, 0);
+  addRow("Employer NEC Expense", totalNEC_Employer, 0);
+  addRow("SDF Expense", totalSDF_Employer, 0);
 
   // CREDITS (Liabilities)
-  lines.push(`${today},${reference},Net Salaries Payable,,0.00,${totalNetPay.toFixed(2)}`);
-  lines.push(`${today},${reference},PAYE Payable,,0.00,${totalPAYE.toFixed(2)}`);
-  lines.push(`${today},${reference},AIDS Levy Payable,,0.00,${totalAidsLevy.toFixed(2)}`);
-  lines.push(`${today},${reference},NSSA Payable,,0.00,${totalNSSA_Payable.toFixed(2)}`);
-  lines.push(`${today},${reference},NEC Payable,,0.00,${totalNEC_Payable.toFixed(2)}`);
-  lines.push(`${today},${reference},SDF Payable,,0.00,${totalSDF_Employer.toFixed(2)}`);
+  addRow("Net Salaries Payable", 0, totalNetPay);
+  addRow("PAYE Payable", 0, totalPAYE);
+  addRow("AIDS Levy Payable", 0, totalAidsLevy);
+  addRow("NSSA Payable", 0, totalNSSA_Payable);
+  addRow("NEC Payable", 0, totalNEC_Payable);
+  addRow("SDF Payable", 0, totalSDF_Employer);
 
-  return lines.join("\n");
+  return [header, ...rows].join("\n");
 }

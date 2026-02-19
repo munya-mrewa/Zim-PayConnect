@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { generateBatchZip } from "@/lib/pdf-generator";
 import { saveAs } from "file-saver";
 import { ColumnMapping } from "@/lib/ephemeral-engine/types";
+import { GLFormat } from "@/lib/ephemeral-engine/gl-exporter";
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -16,6 +17,7 @@ export default function UploadPage() {
   const [result, setResult] = useState<any>(null);
   const [generating, setGenerating] = useState(false);
   const [processingMonth, setProcessingMonth] = useState<number>(new Date().getMonth() + 1);
+  const [glFormat, setGlFormat] = useState<GLFormat>("STANDARD");
   
   // Mapping State
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -98,7 +100,7 @@ export default function UploadPage() {
       const tin = result.meta?.tin; // Optional
       const isWhiteLabeled = result.meta?.isWhiteLabeled || false;
 
-      const blob = await generateBatchZip(result.data, orgName, logoUrl, tin, isWhiteLabeled);
+      const blob = await generateBatchZip(result.data, orgName, logoUrl, tin, isWhiteLabeled, glFormat);
       saveAs(blob, `Payroll_Reports_${new Date().toISOString().split('T')[0]}.zip`);
     } catch (error) {
       console.error("Generation failed:", error);
@@ -374,6 +376,19 @@ export default function UploadPage() {
                        {JSON.stringify(result.data, null, 2)}
                     </div>
                     
+                    <div className="space-y-2">
+                        <Label>GL Export Format</Label>
+                        <select 
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            value={glFormat}
+                            onChange={(e) => setGlFormat(e.target.value as GLFormat)}
+                        >
+                            <option value="STANDARD">Standard (Generic CSV)</option>
+                            <option value="SAGE">Sage Pastel (Batch)</option>
+                            <option value="QUICKBOOKS">QuickBooks (CSV)</option>
+                        </select>
+                    </div>
+
                     <div className="flex gap-2">
                        <Button 
                           variant="outline" 

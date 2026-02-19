@@ -3,7 +3,7 @@ import autoTable from "jspdf-autotable";
 import JSZip from "jszip";
 import { TaxResult, RawPayrollRecord } from "@/lib/ephemeral-engine/types";
 import { generateZimraXml } from "@/lib/xml-generator";
-import { generateGLCSV } from "@/lib/ephemeral-engine/gl-exporter";
+import { generateGLCSV, GLFormat } from "@/lib/ephemeral-engine/gl-exporter";
 
 // Combine raw record and calculation result
 type FullRecord = RawPayrollRecord & { taxResult: TaxResult };
@@ -101,7 +101,7 @@ export async function generatePayslipPDF(record: FullRecord, orgName: string, lo
   return doc.output("arraybuffer");
 }
 
-export async function generateBatchZip(records: FullRecord[], orgName: string, logoUrl?: string | null, tin?: string, removeBranding: boolean = false): Promise<Blob> {
+export async function generateBatchZip(records: FullRecord[], orgName: string, logoUrl?: string | null, tin?: string, removeBranding: boolean = false, glFormat: GLFormat = "STANDARD"): Promise<Blob> {
   const zip = new JSZip();
   const rootFolder = zip.folder(`Payslips-${new Date().toISOString().split('T')[0]}`);
 
@@ -150,7 +150,7 @@ export async function generateBatchZip(records: FullRecord[], orgName: string, l
 
   // Generate GL Export (Combined)
   try {
-      const glCsv = generateGLCSV(records, orgName);
+      const glCsv = generateGLCSV(records, orgName, glFormat);
       rootFolder?.file("General_Ledger.csv", glCsv);
   } catch (e) {
       console.warn("Failed to generate GL CSV", e);
