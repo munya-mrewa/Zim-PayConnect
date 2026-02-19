@@ -101,17 +101,9 @@ export async function* parseCSVStream(stream: Readable, mapping?: ColumnMapping)
         const permIdx = find(["permanent", "ispermanent", "type", "contract"], mapping?.isPermanent);
         const ytdTaxIdx = find(["ytdtax", "taxpaid", "yeartodate", "ptd"], mapping?.ytdTaxPaid);
         const ytdGrossIdx = find(["ytdgross", "grossytd", "totalgross", "cumgross", "grosstodate"], mapping?.ytdGross);
-        const allowancesIdx = find(["allowance", "allowances", "benefits", "otherincome"], undefined); // No mapping support in UI yet, auto-detect for now? Or better add to mapping interface
-        // Actually, mapping is passed as optional arg. I should respect it if user provided it. 
-        // But ColumnMapping interface in types.ts doesn't have 'allowances' yet? 
-        // I added 'exemptAllowances' but not 'allowances'. 
-        // I should have added 'allowances' to types.ts too. 
-        // For now, I'll rely on auto-detect for 'allowances' if not in mapping, but I can't access mapping.allowances if typescript complains.
-        // Let's assume I missed adding 'allowances' to types.ts in previous step. 
-        // I will add 'exemptAllowances' which I did add.
         
         const exemptIdx = find(["exempt", "taxfree", "nontaxable", "exemptallowance"], mapping?.exemptAllowances);
-        const allowIdx = find(["allowance", "allowances", "benefits"], (mapping as any)?.allowances); // Cast to any to bypass missing type for now, or assume it's there.
+        const allowIdx = find(["allowance", "allowances", "benefits"], mapping?.allowances);
 
         // Check required
         if (idIdx === -1 || nameIdx === -1 || salaryIdx === -1) {

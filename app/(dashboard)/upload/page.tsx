@@ -165,6 +165,7 @@ export default function UploadPage() {
                                 <option value="">Select Column...</option>
                                 {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                             </select>
+                            <p className="text-[10px] text-muted-foreground">Base salary excluding allowances.</p>
                         </div>
                         <div className="space-y-2">
                             <Label>TIN (Optional)</Label>
