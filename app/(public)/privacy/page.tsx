@@ -73,7 +73,7 @@ export default function PrivacyPage() {
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">6. Contact Us</h2>
         <p>
-          If you have questions about this Privacy Policy, please contact us at privacy@zim-payconnect.com.
+          If you have questions about this Privacy Policy, please contact us at munya.mrewa@vextraldigital.com.
         </p>
       </section>
     </div>
