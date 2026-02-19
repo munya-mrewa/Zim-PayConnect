@@ -69,7 +69,8 @@ export async function updateTaxSettings(data: TaxSettingsValues) {
 
     const { 
         defaultCurrency, nssaEnabled, nssaRate, nssaCeilingUSD, nssaCeilingZiG, 
-        necEnabled, necRate, sdfEnabled, sdfRate 
+        necEnabled, necRate, sdfEnabled, sdfRate,
+        autoUpdateRates, currentExchangeRate
     } = validatedFields.data;
 
     await db.organization.update({
@@ -83,7 +84,9 @@ export async function updateTaxSettings(data: TaxSettingsValues) {
         necEnabled,
         necRate,
         sdfEnabled,
-        sdfRate
+        sdfRate,
+        autoUpdateRates: autoUpdateRates ?? false,
+        currentExchangeRate: currentExchangeRate ? Number(currentExchangeRate) : undefined
       },
     });
 

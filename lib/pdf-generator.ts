@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 import JSZip from "jszip";
 import { TaxResult, RawPayrollRecord } from "@/lib/ephemeral-engine/types";
 import { generateZimraXml } from "@/lib/xml-generator";
+import { generateGLCSV } from "@/lib/ephemeral-engine/gl-exporter";
 
 // Combine raw record and calculation result
 type FullRecord = RawPayrollRecord & { taxResult: TaxResult };
@@ -145,6 +146,14 @@ export async function generateBatchZip(records: FullRecord[], orgName: string, l
       } catch (e) {
           console.warn("Failed to generate ZIMRA XML", e);
       }
+  }
+
+  // Generate GL Export (Combined)
+  try {
+      const glCsv = generateGLCSV(records, orgName);
+      rootFolder?.file("General_Ledger.csv", glCsv);
+  } catch (e) {
+      console.warn("Failed to generate GL CSV", e);
   }
 
   return await zip.generateAsync({ type: "blob" });

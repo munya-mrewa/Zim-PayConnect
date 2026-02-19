@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calculator, Loader2 } from "lucide-react";
+import { Calculator, Loader2, RefreshCw } from "lucide-react";
 
 interface TaxSettingsFormProps {
   initialData: TaxSettingsValues;
@@ -20,6 +20,7 @@ export function TaxSettingsForm({ initialData }: TaxSettingsFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [syncing, setSyncing] = useState(false);
 
   const {
     register,
@@ -35,6 +36,25 @@ export function TaxSettingsForm({ initialData }: TaxSettingsFormProps) {
   const nssaEnabled = watch("nssaEnabled");
   const necEnabled = watch("necEnabled");
   const sdfEnabled = watch("sdfEnabled");
+  const autoUpdate = watch("autoUpdateRates");
+
+  const handleSync = async (e: React.MouseEvent) => {
+      e.preventDefault();
+      setSyncing(true);
+      try {
+          const res = await fetch("/api/rates?refresh=true");
+          const data = await res.json();
+          if (data.usd_zig) {
+              setValue("currentExchangeRate", data.usd_zig, { shouldDirty: true });
+              setSuccess("Rate synced successfully!");
+          }
+      } catch (e) {
+          console.error(e);
+          setError("Failed to sync rate.");
+      } finally {
+          setSyncing(false);
+      }
+  };
 
   const onSubmit = (data: TaxSettingsValues) => {
     setError(null);
@@ -77,6 +97,47 @@ export function TaxSettingsForm({ initialData }: TaxSettingsFormProps) {
                         <SelectItem value="ZiG">ZiG (Zimbabwe Gold)</SelectItem>
                     </SelectContent>
                 </Select>
+            </div>
+
+            <div className="border-t" />
+
+            {/* Exchange Rate */}
+            <div className="space-y-4">
+                <Label className="font-semibold">Exchange Rate (USD to ZiG)</Label>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <input 
+                            type="checkbox" 
+                            id="autoUpdateRates" 
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            {...register("autoUpdateRates")} 
+                        />
+                        <Label htmlFor="autoUpdateRates" className="font-normal">Auto-Fetch Daily Rate</Label>
+                    </div>
+                </div>
+                <div className="flex items-end gap-4">
+                    <div className="space-y-2 flex-1">
+                        <Label>Current Rate (1 USD = X ZiG)</Label>
+                        <Input 
+                            type="number" 
+                            step="0.0001" 
+                            {...register("currentExchangeRate")} 
+                            disabled={autoUpdate}
+                        />
+                    </div>
+                    <Button 
+                        variant="outline" 
+                        onClick={handleSync} 
+                        disabled={syncing || !autoUpdate}
+                        title="Sync now (Requires Auto-Fetch enabled)"
+                    >
+                        {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                        <span className="ml-2">Sync</span>
+                    </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                    Used to calculate NSSA ceilings and tax bands in local currency.
+                </p>
             </div>
 
             <div className="border-t" />

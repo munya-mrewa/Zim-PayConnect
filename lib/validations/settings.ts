@@ -17,6 +17,9 @@ export const taxSettingsSchema = z.object({
   necRate: z.coerce.number().min(0).max(1),
   sdfEnabled: z.boolean(),
   sdfRate: z.coerce.number().min(0).max(1),
+  // Exchange Rate
+  autoUpdateRates: z.boolean().optional(), // Optional to allow backward compatibility if form doesn't send it initially
+  currentExchangeRate: z.coerce.number().min(0).optional(),
 });
 
 export const passwordChangeSchema = z.object({
