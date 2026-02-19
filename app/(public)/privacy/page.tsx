@@ -30,7 +30,7 @@ export default function PrivacyPage() {
         <p>We only collect and store the minimum information necessary to manage your account and subscription:</p>
         <ul className="list-disc pl-6 space-y-2">
           <li><strong>Account Information:</strong> Name, email address, and encrypted password.</li>
-          <li><strong>Organization Details:</strong> Company name, Taxpayer ID (TIN), and billing address.</li>
+          <li><strong>Organization Details:</strong> Company name, Taxpayer ID (TIN), billing address, and <strong>Tax/Exchange Rate Configuration</strong>.</li>
           <li><strong>Transaction Logs:</strong> Metadata about processing events (e.g., "File processed at 10:00 AM", "Success/Fail status", "Record count"). <strong>We do NOT log employee names, salaries, or IDs.</strong></li>
           <li><strong>Payment Info:</strong> We do not store credit card details. Payments are processed by Pesepay.</li>
         </ul>

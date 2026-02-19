@@ -27,8 +27,13 @@ export default function AboutPage() {
 
         <p>
           Designed for the modern Zimbabwean economy, our system features a robust <strong>Dual Currency Engine</strong> that seamlessly unifies 
-          <strong> ZiG and USD</strong> payrolls. We handle real-time exchange rate unification, statutory deduction splitting (NSSA, AIDS Levy), 
+          <strong> ZiG and USD</strong> payrolls. We handle real-time exchange rate unification via auto-fetch feeds, statutory deduction splitting (NSSA, AIDS Levy), 
           and Final Deduction System (FDS) compliance with mathematical precision.
+        </p>
+
+        <p>
+          Beyond compliance, we streamline your workflow with <strong>General Ledger (GL) Exports</strong> for Sage and QuickBooks, closing the loop between 
+          payroll calculation and financial reporting.
         </p>
 
         <p>

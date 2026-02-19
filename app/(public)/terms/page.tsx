@@ -33,10 +33,15 @@ export default function TermsPage() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold">3. No Tax Advice</h2>
+        <h2 className="text-xl font-semibold">3. No Tax Advice & Exchange Rates</h2>
         <p>
           The Service is a calculation and formatting tool designed to assist with payroll processing in accordance with 
           ZIMRA TaRMS specifications. <strong>The Service does not constitute professional tax, legal, or accounting advice.</strong>
+        </p>
+        <p>
+          <strong>Exchange Rates:</strong> The "Auto-Fetch" feature provides exchange rate data from third-party sources for convenience. 
+          Zim-PayConnect does not guarantee the accuracy, timeliness, or availability of these rates. You are responsible for verifying 
+          that the rate used matches the official rate required by ZIMRA for your specific transaction date.
         </p>
         <p>
           While we strive to keep our tax tables and formulas up to date with current legislation, you are solely responsible for 
