@@ -42,5 +42,11 @@ export const NEC_CONFIG = {
   deductFromTaxable: true
 };
 
+// Casual / Non-FDS Configuration
+export const CASUAL_CONFIG = {
+  rate: 0.20, // 20% Flat Rate
+  exemptFromNSSA: true // Often casuals don't pay NSSA if short-term, strictly configurable
+};
+
 // AIDS Levy
 export const AIDS_LEVY_RATE = 0.03;

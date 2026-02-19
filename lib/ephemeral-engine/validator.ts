@@ -22,6 +22,14 @@ export function validateRecord(record: RawPayrollRecord): ValidationResult {
       errors.push("Allowances cannot be negative");
   }
 
+  if (record.ytdGross !== undefined && (isNaN(record.ytdGross) || record.ytdGross < 0)) {
+      errors.push("YTD Gross must be a non-negative number");
+  }
+
+  if (record.ytdTaxPaid !== undefined && (isNaN(record.ytdTaxPaid) || record.ytdTaxPaid < 0)) {
+      errors.push("YTD Tax Paid must be a non-negative number");
+  }
+
   // 2. Currency Validation
   if (record.currency !== "USD" && record.currency !== "ZiG") {
     errors.push(`Invalid Currency: ${record.currency}. Must be 'USD' or 'ZiG'.`);

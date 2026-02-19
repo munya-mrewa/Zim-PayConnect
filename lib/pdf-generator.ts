@@ -56,6 +56,7 @@ export async function generatePayslipPDF(record: FullRecord, orgName: string, lo
   doc.text(`TIN: ${record.tin || "N/A"}`, 14, 50);
   doc.text(`Date: ${new Date().toLocaleDateString()}`, 150, 45);
   doc.text(`Currency: ${record.currency}`, 150, 50);
+  doc.text(`Tax Method: ${record.taxResult.method || "PAYE"}`, 150, 55);
 
   // Table Data
   const { taxResult } = record;
@@ -77,7 +78,7 @@ export async function generatePayslipPDF(record: FullRecord, orgName: string, lo
   ];
 
   autoTable(doc, {
-    startY: 60,
+    startY: 65, // Adjusted down for extra header line
     head: [["Description", "Amount"]],
     body: bodyData as any,
     theme: "grid",
@@ -121,11 +122,11 @@ export async function generateBatchZip(records: FullRecord[], orgName: string, l
     }
 
     // CSV Summary
-    let csvContent = `EmployeeID,Name,Gross,NSSA,NEC,Taxable,PAYE,AIDS_Levy,NetPay,SDF_Employer
+    let csvContent = `EmployeeID,Name,Gross,NSSA,NEC,Taxable,PAYE,AIDS_Levy,NetPay,SDF_Employer,Method,YTD_Gross,YTD_Tax_Paid
 `;
     batch.forEach(r => {
       const t = r.taxResult;
-      csvContent += `${r.employeeId},${r.name},${t.grossIncome.toFixed(2)},${t.nssa.toFixed(2)},${(t.nec || 0).toFixed(2)},${t.taxableIncome.toFixed(2)},${t.paye.toFixed(2)},${t.aidsLevy.toFixed(2)},${t.netPay.toFixed(2)},${(t.sdf || 0).toFixed(2)}
+      csvContent += `${r.employeeId},${r.name},${t.grossIncome.toFixed(2)},${t.nssa.toFixed(2)},${(t.nec || 0).toFixed(2)},${t.taxableIncome.toFixed(2)},${t.paye.toFixed(2)},${t.aidsLevy.toFixed(2)},${t.netPay.toFixed(2)},${(t.sdf || 0).toFixed(2)},${t.method || "PAYE"},${r.ytdGross || 0},${r.ytdTaxPaid || 0}
 `;
     });
     folder.file(summaryName, csvContent);

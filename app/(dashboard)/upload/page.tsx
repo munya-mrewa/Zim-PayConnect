@@ -16,6 +16,8 @@ interface ColumnMapping {
   currency?: string;
   tin?: string;
   isPermanent?: string;
+  ytdGross?: string;
+  ytdTaxPaid?: string;
 }
 
 export default function UploadPage() {
@@ -23,6 +25,7 @@ export default function UploadPage() {
   const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error" | "mapping">("idle");
   const [result, setResult] = useState<any>(null);
   const [generating, setGenerating] = useState(false);
+  const [processingMonth, setProcessingMonth] = useState<number>(new Date().getMonth() + 1);
   
   // Mapping State
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -44,6 +47,7 @@ export default function UploadPage() {
     setStatus("uploading");
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("processingMonth", processingMonth.toString());
     
     // Send mapping if we have it
     if (Object.keys(mapping).length > 0) {
@@ -192,6 +196,28 @@ export default function UploadPage() {
                                 {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                             </select>
                         </div>
+                        <div className="space-y-2">
+                            <Label>YTD Gross (Optional - FDS)</Label>
+                            <select 
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                onChange={(e) => mapField("ytdGross", e.target.value)}
+                                value={mapping.ytdGross || ""}
+                            >
+                                <option value="">Select Column...</option>
+                                {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>YTD Tax Paid (Optional - FDS)</Label>
+                            <select 
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                onChange={(e) => mapField("ytdTaxPaid", e.target.value)}
+                                value={mapping.ytdTaxPaid || ""}
+                            >
+                                <option value="">Select Column...</option>
+                                {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
+                            </select>
+                        </div>
                     </div>
                 </CardContent>
                 <CardFooter>
@@ -207,6 +233,23 @@ export default function UploadPage() {
               </CardDescription>
            </CardHeader>
            <CardContent className="space-y-4">
+              <div className="grid w-full max-w-sm items-center gap-1.5">
+                 <Label htmlFor="month-select">Processing Month</Label>
+                 <select 
+                    id="month-select"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={processingMonth}
+                    onChange={(e) => setProcessingMonth(parseInt(e.target.value))}
+                 >
+                    {Array.from({length: 12}, (_, i) => i + 1).map(m => (
+                        <option key={m} value={m}>{new Date(0, m - 1).toLocaleString('default', { month: 'long' })}</option>
+                    ))}
+                 </select>
+                 <p className="text-[0.8rem] text-muted-foreground">
+                    Required for accurate FDS calculations.
+                 </p>
+              </div>
+
               <div className="grid w-full max-w-sm items-center gap-1.5">
                  <Label htmlFor="payroll-file">Payroll CSV</Label>
                  <div className="flex items-center gap-4">

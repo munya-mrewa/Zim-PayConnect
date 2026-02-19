@@ -4,7 +4,8 @@ export interface RawPayrollRecord {
   tin?: string;
   basicSalary: number;
   allowances?: number; // Added for completeness
-  ytdTaxPaid?: number; // Optional: For Year-End Reconciliation
+  ytdGross?: number; // Required for FDS (Previous Months Total)
+  ytdTaxPaid?: number; // Required for FDS (Previous Months Total)
   period?: string; // e.g. "2026-02"
   currency: "USD" | "ZiG";
   isPermanent: boolean;
@@ -12,6 +13,8 @@ export interface RawPayrollRecord {
 
 export interface TaxConfig {
   defaultCurrency: "USD" | "ZiG";
+  processingMonth: number; // 1-12 (e.g. 1 = Jan), required for FDS
+  casualTaxRate: number; // e.g. 0.20 (20%)
   nssaEnabled: boolean;
   nssaRate: number;
   nssaCeilingUSD: number;
@@ -29,7 +32,8 @@ export interface ColumnMapping {
   currency?: string;
   tin?: string;
   isPermanent?: string;
-  ytdTaxPaid?: string; // Mapping for YTD Tax
+  ytdGross?: string;
+  ytdTaxPaid?: string;
 }
 
 export interface TaxResult {
@@ -43,6 +47,7 @@ export interface TaxResult {
   netPay: number;
   sdf: number; // Standards Development Fund (Employer Cost)
   currency: "USD" | "ZiG";
+  method: "FDS" | "PAYE" | "FLAT"; // Track which method was used
 }
 
 export interface ValidationResult {

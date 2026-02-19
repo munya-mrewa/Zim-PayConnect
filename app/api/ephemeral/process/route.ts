@@ -90,7 +90,16 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const mappingJson = formData.get("mapping") as string;
+    const processingMonthStr = formData.get("processingMonth") as string;
     
+    let processingMonth = 1; // Default to January if not specified
+    if (processingMonthStr) {
+        const m = parseInt(processingMonthStr);
+        if (!isNaN(m) && m >= 1 && m <= 12) {
+            processingMonth = m;
+        }
+    }
+
     let mapping: ColumnMapping | undefined;
     if (mappingJson) {
         try {
@@ -115,9 +124,12 @@ export async function POST(request: Request) {
     try {
         for await (const record of parseCSVStream(nodeStream, mapping)) {
             const validation = validateRecord(record);
+            // Merge org config with request-specific config (processingMonth)
+            const requestConfig = { ...taxConfig, processingMonth };
+            
             processedData.push({
                 ...record,
-                taxResult: calculateTax(record, taxConfig),
+                taxResult: calculateTax(record, requestConfig),
                 isValid: validation.isValid,
                 validationErrors: validation.errors
             });

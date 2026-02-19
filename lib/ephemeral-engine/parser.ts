@@ -19,27 +19,23 @@ export function parseCSV(fileBuffer: Buffer): RawPayrollRecord[] {
   const records: RawPayrollRecord[] = [];
 
   // Skip Header (Simple assumption: first line is header)
-  // We should ideally detect header but for this simple sync function, we assume standard layout or skip first.
   const dataLines = lines.slice(1);
 
   for (const line of dataLines) {
     const cols = line.split(',').map(c => c.trim());
 
-    if (cols.length < 4) continue; // Need at least ID, Name, TIN, Salary (based on test input structure)
+    if (cols.length < 4) continue; 
 
     // Test Input: ID,Name,TIN,Salary,Currency,Permanent
-    // Index:      0  1    2   3      4        5
-
     const id = cols[0];
     const name = cols[1];
-    const salaryStr = cols[3]; // Index 3 for Salary
-    const currencyStr = cols[4]; // Index 4 for Currency
+    const salaryStr = cols[3]; 
+    const currencyStr = cols[4]; 
 
     if (!id || !name || !salaryStr) continue;
 
     const salary = parseFloat(salaryStr);
     
-    // Enforce strictly positive salary to exclude the "Skipped" row with 0 salary
     if (isNaN(salary) || salary <= 0) continue; 
 
     let currency: "USD" | "ZiG" = "ZiG";
@@ -103,7 +99,8 @@ export async function* parseCSVStream(stream: Readable, mapping?: ColumnMapping)
         const tinIdx = find(["tin", "taxid", "nationalid"], mapping?.tin);
         const currIdx = find(["currency", "curr", "denomination"], mapping?.currency);
         const permIdx = find(["permanent", "ispermanent", "type", "contract"], mapping?.isPermanent);
-        const ytdTaxIdx = find(["ytdtax", "taxpaid", "yeartodate"], mapping?.ytdTaxPaid);
+        const ytdTaxIdx = find(["ytdtax", "taxpaid", "yeartodate", "ptd"], mapping?.ytdTaxPaid);
+        const ytdGrossIdx = find(["ytdgross", "grossytd", "totalgross", "cumgross", "grosstodate"], mapping?.ytdGross);
 
         // Check required
         if (idIdx === -1 || nameIdx === -1 || salaryIdx === -1) {
@@ -117,7 +114,8 @@ export async function* parseCSVStream(stream: Readable, mapping?: ColumnMapping)
             tin: tinIdx,
             currency: currIdx,
             isPermanent: permIdx,
-            ytdTaxPaid: ytdTaxIdx
+            ytdTaxPaid: ytdTaxIdx,
+            ytdGross: ytdGrossIdx
         };
         continue;
     }
@@ -132,12 +130,16 @@ export async function* parseCSVStream(stream: Readable, mapping?: ColumnMapping)
     const tin = indices.tin !== -1 ? record[indices.tin] : undefined;
     const currencyStr = indices.currency !== -1 ? record[indices.currency] : undefined;
     const permanentStr = indices.isPermanent !== -1 ? record[indices.isPermanent] : undefined;
+    
     const ytdTaxPaidStr = indices.ytdTaxPaid !== -1 ? record[indices.ytdTaxPaid] : undefined;
-    const ytdTaxPaid = ytdTaxPaidStr ? parseFloat(ytdTaxPaidStr) : undefined;
+    const ytdTaxPaid = ytdTaxPaidStr ? parseFloat(ytdTaxPaidStr.replace(/[^0-9.-]/g, '')) : undefined;
+
+    const ytdGrossStr = indices.ytdGross !== -1 ? record[indices.ytdGross] : undefined;
+    const ytdGross = ytdGrossStr ? parseFloat(ytdGrossStr.replace(/[^0-9.-]/g, '')) : undefined;
 
     if (!id || !name || !salaryStr) continue;
 
-    const salary = parseFloat(salaryStr);
+    const salary = parseFloat(salaryStr.replace(/[^0-9.-]/g, ''));
     if (isNaN(salary) || salary <= 0) continue;
 
     let validCurrency: "USD" | "ZiG" = "ZiG"; // Default
@@ -154,8 +156,9 @@ export async function* parseCSVStream(stream: Readable, mapping?: ColumnMapping)
       tin: tin || undefined,
       basicSalary: salary,
       currency: validCurrency,
-      isPermanent: permanentStr ? (permanentStr.toLowerCase() === 'true' || permanentStr.toLowerCase() === 'yes') : true,
-      ytdTaxPaid: ytdTaxPaid || undefined
+      isPermanent: permanentStr ? (permanentStr.toLowerCase() === 'true' || permanentStr.toLowerCase() === 'yes' || permanentStr === '1') : true,
+      ytdTaxPaid: !isNaN(ytdTaxPaid!) ? ytdTaxPaid : undefined,
+      ytdGross: !isNaN(ytdGross!) ? ytdGross : undefined
     };
   }
 }
