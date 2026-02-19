@@ -49,15 +49,15 @@ export default function UserGuidePage() {
         <Card className="bg-card/50 backdrop-blur border-muted">
           <CardHeader>
             <Calculator className="h-10 w-10 text-primary mb-2" />
-            <CardTitle>2. Tax Configuration</CardTitle>
-            <CardDescription>Customize statutory deductions.</CardDescription>
+            <CardTitle>2. Tax & Rates</CardTitle>
+            <CardDescription>Automated compliance engine.</CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
-              <li>In <strong>Settings</strong>, locate the Tax Config section.</li>
-              <li>Enable/Disable NSSA, NEC, or SDF.</li>
-              <li>Adjust rates (e.g., NSSA 4.5%) and ceilings.</li>
-              <li>Updates are applied instantly to next payroll run.</li>
+              <li>Enable <strong>Auto-Fetch</strong> for daily RBZ/market exchange rates.</li>
+              <li>Configure NSSA (4.5%), NEC, and SDF settings.</li>
+              <li>Rates automatically update ZiG tax bands and NSSA ceilings.</li>
+              <li>Casual workers are automatically exempt from NSSA/NEC.</li>
             </ul>
           </CardContent>
         </Card>
@@ -65,15 +65,15 @@ export default function UserGuidePage() {
         <Card className="bg-card/50 backdrop-blur border-muted">
           <CardHeader>
             <Upload className="h-10 w-10 text-primary mb-2" />
-            <CardTitle>3. Upload Payroll</CardTitle>
-            <CardDescription>Securely process your data.</CardDescription>
+            <CardTitle>3. Upload & FDS</CardTitle>
+            <CardDescription>Smart mapping and FDS logic.</CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
-              <li>Go to <strong>Upload Payroll</strong>.</li>
-              <li>Select your CSV or Excel file.</li>
-              <li>Map your columns (Gross Income, Allowances, etc.).</li>
-              <li>Click <strong>Process</strong>. Data is processed in-memory.</li>
+              <li>Select <strong>Processing Month</strong> for accurate FDS averaging.</li>
+              <li>Map <strong>YTD Gross</strong> and <strong>YTD Tax Paid</strong> for cumulative calculation.</li>
+              <li>Map <strong>Tax Exempt Allowances</strong> to reduce liability correctly.</li>
+              <li>Set "Permanent" column to <code>FALSE</code> for 20% Flat Tax.</li>
             </ul>
           </CardContent>
         </Card>
@@ -81,15 +81,15 @@ export default function UserGuidePage() {
         <Card className="bg-card/50 backdrop-blur border-muted">
           <CardHeader>
             <FileText className="h-10 w-10 text-primary mb-2" />
-            <CardTitle>4. Generate Reports</CardTitle>
-            <CardDescription>Download compliant payslips & returns.</CardDescription>
+            <CardTitle>4. Reports & GL</CardTitle>
+            <CardDescription>Accounting ready exports.</CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
-              <li>Review the calculated summary.</li>
-              <li>Download PDF Payslips for all employees.</li>
-              <li>Export ZIMRA P2 Returns and Bank Schedules.</li>
-              <li>Files vanish after session ends (Ephemeral).</li>
+              <li>Download <strong>PDF Payslips</strong> (zipped).</li>
+              <li>Get ZIMRA <strong>P2 Returns</strong> (XML) for TaRMS.</li>
+              <li>Export <strong>General Ledger</strong> CSVs for Sage or QuickBooks.</li>
+              <li>Auditable "Payroll Summary" included in every batch.</li>
             </ul>
           </CardContent>
         </Card>
