@@ -36,6 +36,7 @@ export interface ColumnMapping {
   ytdGross?: string;
   ytdTaxPaid?: string;
   exemptAllowances?: string;
+  allowances?: string;
 }
 
 export interface TaxResult {

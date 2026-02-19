@@ -65,6 +65,7 @@ export async function generatePayslipPDF(record: FullRecord, orgName: string, lo
   const bodyData = [
     ["Basic Salary", `${currency} ${record.basicSalary.toFixed(2)}`],
     ["Allowances", `${currency} ${(record.allowances || 0).toFixed(2)}`],
+    ...(record.exemptAllowances ? [["Exempt Allowances", `${currency} ${record.exemptAllowances.toFixed(2)}`]] : []),
     [{ content: "Gross Income", styles: { fontStyle: "bold" } }, { content: `${currency} ${taxResult.grossIncome.toFixed(2)}`, styles: { fontStyle: "bold" } }],
     ["", ""], // Spacer
     ["Deductions", ""],

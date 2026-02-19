@@ -4,23 +4,11 @@ import { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2, Download, Table } from "lucide-react";
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, Download, Table, HelpCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { generateBatchZip } from "@/lib/pdf-generator";
 import { saveAs } from "file-saver";
-
-interface ColumnMapping {
-  employeeId: string;
-  name: string;
-  basicSalary: string;
-  currency?: string;
-  tin?: string;
-  isPermanent?: string;
-  ytdGross?: string;
-  ytdTaxPaid?: string;
-  exemptAllowances?: string;
-  allowances?: string;
-}
+import { ColumnMapping } from "@/lib/ephemeral-engine/types";
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -41,6 +29,15 @@ export default function UploadPage() {
       setMapping({});
       setCsvHeaders([]);
     }
+  };
+
+  const downloadSample = () => {
+    const headers = "EmployeeID,Name,TIN,Basic Salary,Allowances,Tax Exempt Allowances,Currency,Permanent,YTD Gross,YTD Tax Paid";
+    const row1 = "E001,John Doe,123456,1000,200,50,USD,true,0,0";
+    const row2 = "C001,Jane Casual,987654,500,0,0,USD,false,0,0";
+    const content = `${headers}\n${row1}\n${row2}`;
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
+    saveAs(blob, "payroll_sample.csv");
   };
 
   const handleUpload = async () => {
@@ -119,6 +116,10 @@ export default function UploadPage() {
     <div className="flex-1 space-y-8 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Upload Payroll</h2>
+        <Button variant="outline" size="sm" onClick={downloadSample}>
+            <Download className="mr-2 h-4 w-4" />
+            Download Sample CSV
+        </Button>
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">
@@ -186,6 +187,7 @@ export default function UploadPage() {
                                 <option value="">Select Column...</option>
                                 {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                             </select>
+                            <p className="text-[10px] text-muted-foreground">Default: ZiG. Values: USD, ZiG.</p>
                         </div>
                          <div className="space-y-2">
                             <Label>Permanent? (Optional)</Label>
@@ -197,6 +199,7 @@ export default function UploadPage() {
                                 <option value="">Select Column...</option>
                                 {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                             </select>
+                            <p className="text-[10px] text-muted-foreground">True/False. False = Casual (Flat Tax).</p>
                         </div>
                         <div className="space-y-2">
                             <Label>Total Allowances (Optional)</Label>
@@ -219,6 +222,7 @@ export default function UploadPage() {
                                 <option value="">Select Column...</option>
                                 {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                             </select>
+                            <p className="text-[10px] text-muted-foreground">Amount to subtract from Taxable Income.</p>
                         </div>
                         <div className="space-y-2">
                             <Label>YTD Gross (Optional - FDS)</Label>
@@ -230,6 +234,7 @@ export default function UploadPage() {
                                 <option value="">Select Column...</option>
                                 {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                             </select>
+                            <p className="text-[10px] text-muted-foreground">Total Gross up to previous month.</p>
                         </div>
                         <div className="space-y-2">
                             <Label>YTD Tax Paid (Optional - FDS)</Label>
@@ -241,6 +246,7 @@ export default function UploadPage() {
                                 <option value="">Select Column...</option>
                                 {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                             </select>
+                            <p className="text-[10px] text-muted-foreground">Total Tax paid up to previous month.</p>
                         </div>
                     </div>
                 </CardContent>
