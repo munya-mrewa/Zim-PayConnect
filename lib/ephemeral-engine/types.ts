@@ -3,7 +3,8 @@ export interface RawPayrollRecord {
   name: string;
   tin?: string;
   basicSalary: number;
-  allowances?: number; // Added for completeness
+  allowances?: number; // Total Allowances
+  exemptAllowances?: number; // Portion of Allowances that is Tax Exempt
   ytdGross?: number; // Required for FDS (Previous Months Total)
   ytdTaxPaid?: number; // Required for FDS (Previous Months Total)
   period?: string; // e.g. "2026-02"
@@ -34,6 +35,7 @@ export interface ColumnMapping {
   isPermanent?: string;
   ytdGross?: string;
   ytdTaxPaid?: string;
+  exemptAllowances?: string;
 }
 
 export interface TaxResult {

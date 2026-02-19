@@ -26,6 +26,7 @@ export function generateZimraXml(records: FullRecord[], orgName: string, tin: st
       <EmployeeID>${escapeXml(record.employeeId)}</EmployeeID>
       <Name>${escapeXml(record.name)}</Name>
       <TIN>${escapeXml(record.tin || "")}</TIN>
+      <EmploymentStatus>${record.isPermanent ? "PERMANENT" : "CASUAL"}</EmploymentStatus>
       <Earnings>
         <BasicSalary>${record.basicSalary.toFixed(2)}</BasicSalary>
         <Allowances>${(record.allowances || 0).toFixed(2)}</Allowances>
@@ -40,6 +41,7 @@ export function generateZimraXml(records: FullRecord[], orgName: string, tin: st
         <TaxableIncome>${t.taxableIncome.toFixed(2)}</TaxableIncome>
         <PAYE>${t.paye.toFixed(2)}</PAYE>
         <AidsLevy>${t.aidsLevy.toFixed(2)}</AidsLevy>
+        <TaxMethod>${t.method || "PAYE"}</TaxMethod>
       </TaxCalculation>
       <NetPay>${t.netPay.toFixed(2)}</NetPay>
     </Employee>

@@ -47,7 +47,11 @@ export function calculateTax(record: RawPayrollRecord, config: Partial<TaxConfig
   }
 
   // 3. Determine Taxable Income
-  const taxableIncome = grossIncome - nssa - nec;
+  // Deduct NSSA, NEC, and Exempt Allowances from Gross
+  const exemptAllowances = record.exemptAllowances || 0;
+  let taxableIncome = grossIncome - nssa - nec - exemptAllowances;
+  
+  if (taxableIncome < 0) taxableIncome = 0;
 
   // 4. Calculate Tax (PAYE) based on Method
   let paye = 0;

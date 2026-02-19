@@ -18,6 +18,8 @@ interface ColumnMapping {
   isPermanent?: string;
   ytdGross?: string;
   ytdTaxPaid?: string;
+  exemptAllowances?: string;
+  allowances?: string;
 }
 
 export default function UploadPage() {
@@ -191,6 +193,28 @@ export default function UploadPage() {
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                 onChange={(e) => mapField("isPermanent", e.target.value)}
                                 value={mapping.isPermanent || ""}
+                            >
+                                <option value="">Select Column...</option>
+                                {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Total Allowances (Optional)</Label>
+                            <select 
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                onChange={(e) => mapField("allowances", e.target.value)}
+                                value={mapping.allowances || ""}
+                            >
+                                <option value="">Select Column...</option>
+                                {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Tax Exempt Portion (Optional)</Label>
+                            <select 
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                onChange={(e) => mapField("exemptAllowances", e.target.value)}
+                                value={mapping.exemptAllowances || ""}
                             >
                                 <option value="">Select Column...</option>
                                 {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
