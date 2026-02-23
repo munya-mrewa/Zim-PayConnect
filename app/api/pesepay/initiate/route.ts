@@ -40,7 +40,7 @@ export async function POST(req: Request) {
 
     if (type === "EXTRA_CLIENT") {
         amount = 15;
-        description = "Extra Client Slot (Agency)";
+        description = "Extra Client Slot (Agency / Institutional)";
         reference = `${orgId}|EXTRA_CLIENT|${Date.now()}`;
     } else if (type === "CREDIT") {
         amount = 5 * (quantity || 1); // $5 per credit

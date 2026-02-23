@@ -33,7 +33,7 @@ export default async function AdminPage() {
     <div className="space-y-6">
       <div className="rounded-md border bg-card text-card-foreground shadow-sm">
         <div className="flex flex-col space-y-1.5 p-6">
-          <h3 className="text-2xl font-semibold leading-none tracking-tight">Enterprise & Agency Clients</h3>
+          <h3 className="text-2xl font-semibold leading-none tracking-tight">Enterprise & Institutional Clients</h3>
           <p className="text-sm text-muted-foreground">Manage dedicated account managers for premium clients.</p>
         </div>
         <div className="p-6 pt-0">
@@ -84,7 +84,7 @@ export default async function AdminPage() {
                 {organizations.length === 0 && (
                   <tr>
                     <td colSpan={4} className="p-4 text-center text-muted-foreground h-24">
-                      No Enterprise or Agency clients found.
+                      No Enterprise or Institutional clients found.
                     </td>
                   </tr>
                 )}

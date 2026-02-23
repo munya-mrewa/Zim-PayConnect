@@ -79,7 +79,7 @@ export default async function ClientsPage() {
               <Building2 className="h-5 w-5 mr-2 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
                  Your current plan ({plan?.name}) does not support multiple client profiles. 
-                 <Link href="/upgrade" className="underline ml-1">Upgrade to Agency</Link> to manage up to 5 clients.
+                 <Link href="/upgrade" className="underline ml-1">Upgrade to Agency / Institutional</Link> to manage up to 5 clients.
               </p>
            </div>
         </div>

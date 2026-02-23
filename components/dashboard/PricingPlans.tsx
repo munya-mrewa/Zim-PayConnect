@@ -93,10 +93,13 @@ export function PricingPlans() {
         <Card key={plan.id} className="flex flex-col">
           <CardHeader>
             <CardTitle>{plan.name}</CardTitle>
-            <CardDescription>
-              {plan.maxEmployees === 'Unlimited' 
-                ? 'Unlimited Employees' 
-                : `Up to ${plan.maxEmployees} Employees`}
+            <CardDescription className="flex flex-col gap-2 min-h-[3rem]">
+              <span>{plan.description}</span>
+              <span className="font-medium text-foreground">
+                {plan.maxEmployees === 'Unlimited' 
+                  ? 'Unlimited Employees' 
+                  : `Up to ${plan.maxEmployees} Employees`}
+              </span>
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1">

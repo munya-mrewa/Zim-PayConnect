@@ -49,7 +49,7 @@ export default async function NewClientPage() {
               <div className="flex-1 space-y-4 p-8 pt-6 text-center">
                   <h2 className="text-xl font-bold text-red-600">Upgrade Required</h2>
                   <p className="mt-2 text-muted-foreground">Your current plan ({planId}) does not support client management.</p>
-                  <a href="/upgrade" className="mt-4 inline-block text-primary hover:underline">Upgrade to Agency Plan</a>
+                  <a href="/upgrade" className="mt-4 inline-block text-primary hover:underline">Upgrade to Agency / Institutional Plan</a>
               </div>
           );
       }

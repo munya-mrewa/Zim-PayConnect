@@ -67,7 +67,7 @@ export function BrandingForm({ initialLogoUrl, subscriptionTier }: BrandingFormP
                 <div className="flex">
                     <div className="ml-3">
                         <p className="text-sm text-yellow-700 dark:text-yellow-200">
-                            Upgrade to the <strong>Agency</strong> plan to upload your custom logo.
+                            Upgrade to the <strong>Agency / Institutional</strong> plan to upload your custom logo.
                         </p>
                     </div>
                 </div>

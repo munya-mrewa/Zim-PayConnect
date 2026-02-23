@@ -5,6 +5,7 @@ export type SubscriptionPlanId = 'MICRO' | 'BUSINESS' | 'AGENCY' | 'ENTERPRISE';
 export interface SubscriptionPlan {
   id: SubscriptionPlanId;
   name: string;
+  description: string;
   price: number;
   currency: 'USD';
   period: 'monthly' | 'yearly';
@@ -17,6 +18,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: 'MICRO',
     name: 'Micro',
+    description: 'Perfect for small businesses and startups.',
     price: 25,
     currency: 'USD',
     period: 'monthly',
@@ -30,6 +32,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: 'BUSINESS',
     name: 'Business',
+    description: 'Ideal for growing companies with standard payroll needs.',
     price: 105,
     currency: 'USD',
     period: 'monthly',
@@ -43,7 +46,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   },
   {
     id: 'AGENCY',
-    name: 'Agency',
+    name: 'Agency / Institutional',
+    description: 'For Audit Firms, Churches, Schools, NGOs, and Multi-entity orgs.',
     price: 250,
     currency: 'USD',
     period: 'monthly',
@@ -59,6 +63,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: 'ENTERPRISE',
     name: 'Enterprise',
+    description: 'Custom solutions for large-scale operations.',
     price: 750,
     currency: 'USD',
     period: 'monthly',

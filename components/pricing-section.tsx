@@ -93,8 +93,11 @@ export function PricingSection({ isTrial = false }: PricingSectionProps) {
             <Card key={plan.id} className="flex flex-col border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 hover:border-zinc-700 transition-all duration-300">
               <CardHeader className="pb-4">
                 <CardTitle className="text-white text-xl">{plan.name}</CardTitle>
-                <CardDescription className="text-zinc-400">
-                   {plan.maxEmployees === 'Unlimited' ? 'Unlimited' : `Up to ${plan.maxEmployees}`} Employees
+                <CardDescription className="text-zinc-400 flex flex-col gap-2 min-h-[3rem]">
+                   <span>{plan.description}</span>
+                   <span className="text-white font-medium">
+                     {plan.maxEmployees === 'Unlimited' ? 'Unlimited' : `Up to ${plan.maxEmployees}`} Employees
+                   </span>
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-1 pb-4">
