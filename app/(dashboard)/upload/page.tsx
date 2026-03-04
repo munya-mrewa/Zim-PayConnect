@@ -139,25 +139,26 @@ export default function UploadPage() {
   };
 
   const handleDownload = async () => {
-    if (!result || !result.data) return;
-    
+    if (!result || !result.fileId) {
+        // Fallback for older logic or if fileId isn't present
+        alert("The file ID was not returned. Please try uploading again.");
+        return;
+    }
+
     try {
       setGenerating(true);
-      const logoUrl = result.meta?.logoUrl;
-      const orgName = result.meta?.orgName || "Zim-PayConnect Client";
-      const tin = result.meta?.tin; // Optional
-      const isWhiteLabeled = result.meta?.isWhiteLabeled || false;
+      // Navigate to the new download endpoint
+      window.location.href = `/api/ephemeral/download?fileId=${result.fileId}`;
 
-      const blob = await generateBatchZip(result.data, orgName, logoUrl, tin, isWhiteLabeled, glFormat);
-      saveAs(blob, `Payroll_Reports_${new Date().toISOString().split('T')[0]}.zip`);
+      // We don't await anything here because navigating to an attachment endpoint 
+      // will just trigger a download in the browser without leaving the page.
     } catch (error) {
       console.error("Generation failed:", error);
-      alert("Failed to generate reports.");
+      alert("Failed to download reports.");
     } finally {
       setGenerating(false);
     }
   };
-
   const mapField = (field: keyof ColumnMapping, header: string) => {
     setMapping(prev => ({ ...prev, [field]: header }));
   };

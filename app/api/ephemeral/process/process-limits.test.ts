@@ -16,6 +16,9 @@ vi.mock('@/lib/db', () => ({
     },
     auditLog: {
         create: vi.fn(),
+    },
+    exchangeRate: {
+        findFirst: vi.fn(),
     }
   },
 }));
@@ -25,7 +28,7 @@ vi.mock('@/lib/ephemeral-engine/parser', () => ({
     // Determine how many records to yield based on a global mock variable or similar mechanism
     // For simplicity, we'll control this via the input file content length in the test
     for (let i = 0; i < global.mockRecordCount; i++) {
-        yield { name: `Employee ${i}`, salary: 1000 };
+        yield { name: `Employee ${i}`, basicSalary: 1000, employeeId: `EMP${i}` };
     }
   },
   MappingRequiredError: class extends Error {}
@@ -34,12 +37,12 @@ vi.mock('@/lib/ephemeral-engine/parser', () => ({
 // Helper to create a mock request
 const createMockRequest = (recordCount: number, method: 'SUBSCRIPTION' | 'CREDIT') => {
   global.mockRecordCount = recordCount;
-  
+
   const formData = new FormData();
   // Create a dummy file
-  const file = new File(['dummy content'], 'test.csv', { type: 'text/csv' });
+  const file = new File(['dummy content'], 'test.csv', { type: 'text/csv' });   
   formData.append('file', file);
-  
+
   return {
     formData: () => Promise.resolve(formData),
     headers: new Headers(),
@@ -49,9 +52,9 @@ const createMockRequest = (recordCount: number, method: 'SUBSCRIPTION' | 'CREDIT
 describe('Process API Limits', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Setup default successful auth and user
-    (getServerSession as any).mockResolvedValue({ user: { id: 'user-1' } });
+    (getServerSession as any).mockResolvedValue({ user: { id: 'user-1' } });    
     (db.user.findUnique as any).mockResolvedValue({
       id: 'user-1',
       organizationId: 'org-1',
@@ -66,17 +69,21 @@ describe('Process API Limits', () => {
         sdfEnabled: true,
         sdfRate: { toNumber: () => 0.01 },
         subscriptionTier: 'MICRO', // Default to MICRO for tests
+        defaultCurrency: 'USD'
       }
     });
-    
+
+    // Mock exchange rate so the API doesn't fail the pre-check
+    (db.exchangeRate.findFirst as any).mockResolvedValue({ rate: 25.0 });
+
     // Default to authorized
     (checkProcessingAccess as any).mockResolvedValue({ authorized: true, method: 'SUBSCRIPTION' });
   });
 
-  it('should enforce 100 employee limit for CREDIT users', async () => {
+  it('should enforce 100 employee limit for CREDIT users', async () => {        
     // Setup CREDIT access
     (checkProcessingAccess as any).mockResolvedValue({ authorized: true, method: 'CREDIT' });
-    
+
     // Attempt 101 records
     const req = createMockRequest(101, 'CREDIT');
     const res = await POST(req);
@@ -89,18 +96,18 @@ describe('Process API Limits', () => {
   it('should allow 100 employees for CREDIT users', async () => {
     // Setup CREDIT access
     (checkProcessingAccess as any).mockResolvedValue({ authorized: true, method: 'CREDIT' });
-    
+
     // Attempt 100 records (limit)
     const req = createMockRequest(100, 'CREDIT');
     const res = await POST(req);
-    
+
     expect(res.status).toBe(200);
   });
 
-  it('should enforce plan limits for SUBSCRIPTION users (MICRO)', async () => {
+  it('should enforce plan limits for SUBSCRIPTION users (MICRO)', async () => { 
     // Setup SUBSCRIPTION access (MICRO limit is 10)
     (checkProcessingAccess as any).mockResolvedValue({ authorized: true, method: 'SUBSCRIPTION' });
-    
+
     // Attempt 11 records
     const req = createMockRequest(11, 'SUBSCRIPTION');
     const res = await POST(req);
@@ -108,17 +115,17 @@ describe('Process API Limits', () => {
 
     expect(res.status).toBe(403);
     expect(data.error).toContain('Plan limit exceeded');
-    expect(data.error).toContain('Micro plan allows up to 10 employees');
+    expect(data.error).toContain('Micro plan allows up to 10 employees');       
   });
 
    it('should allow within limits for SUBSCRIPTION users (MICRO)', async () => {
     // Setup SUBSCRIPTION access
     (checkProcessingAccess as any).mockResolvedValue({ authorized: true, method: 'SUBSCRIPTION' });
-    
+
     // Attempt 10 records
     const req = createMockRequest(10, 'SUBSCRIPTION');
     const res = await POST(req);
-    
+
     expect(res.status).toBe(200);
   });
 });

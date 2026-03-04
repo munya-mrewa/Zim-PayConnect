@@ -1,42 +1,49 @@
 # Page snapshot
 
 ```yaml
-- generic [ref=e2]:
-  - link "← Back to Home" [ref=e4] [cursor=pointer]:
-    - /url: /
-  - generic [ref=e5]:
-    - generic [ref=e6]:
-      - link "Zim-PayConnect" [ref=e7] [cursor=pointer]:
-        - /url: /
-        - generic [ref=e8]: Zim-PayConnect
-      - paragraph [ref=e9]: Secure Ephemeral Payroll Processing
-    - generic [ref=e11]:
-      - generic [ref=e12]:
-        - heading "Create an account" [level=3] [ref=e13]
-        - paragraph [ref=e14]: Enter your information to create your account
-      - generic [ref=e16]:
-        - generic [ref=e17]:
-          - text: Full Name
-          - textbox "Full Name" [ref=e18]:
-            - /placeholder: John Doe
-        - generic [ref=e19]:
-          - text: Email
-          - textbox "Email" [ref=e20]:
-            - /placeholder: name@example.com
-        - generic [ref=e21]:
-          - text: Organization Name
-          - textbox "Organization Name" [ref=e22]:
-            - /placeholder: Acme Corp
-        - generic [ref=e23]:
-          - text: Password
-          - generic [ref=e24]:
-            - textbox "Password" [ref=e25]
-            - button "Show password" [ref=e26] [cursor=pointer]:
-              - img [ref=e27]
-              - generic [ref=e30]: Show password
-        - button "Register" [ref=e31] [cursor=pointer]
-      - generic [ref=e33]:
-        - text: Already have an account?
-        - link "Sign in" [ref=e34] [cursor=pointer]:
-          - /url: /login
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "← Back to Home" [ref=e4] [cursor=pointer]:
+      - /url: /
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - link "Zim-PayConnect" [ref=e7] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e8]: Zim-PayConnect
+        - paragraph [ref=e9]: Secure Ephemeral Payroll Processing
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - heading "Create an account" [level=3] [ref=e13]
+          - paragraph [ref=e14]: Enter your information to create your account
+        - generic [ref=e16]:
+          - generic [ref=e17]:
+            - text: Full Name
+            - textbox "Full Name" [ref=e18]:
+              - /placeholder: John Doe
+              - text: Test User
+          - generic [ref=e19]:
+            - text: Email
+            - textbox "Email" [ref=e20]:
+              - /placeholder: name@example.com
+              - text: testuser1772647322046@example.com
+          - generic [ref=e21]:
+            - text: Organization Name
+            - textbox "Organization Name" [ref=e22]:
+              - /placeholder: Acme Corp
+              - text: Test Organization
+          - generic [ref=e23]:
+            - text: Password
+            - generic [ref=e24]:
+              - textbox "Password" [ref=e25]: Password123!
+              - button "Show password" [ref=e26] [cursor=pointer]:
+                - img [ref=e27]
+                - generic [ref=e30]: Show password
+          - button "Registering..." [disabled]
+        - generic [ref=e32]:
+          - text: Already have an account?
+          - link "Sign in" [ref=e33] [cursor=pointer]:
+            - /url: /login
+  - button "Open Next.js Dev Tools" [ref=e39] [cursor=pointer]:
+    - img [ref=e40]
+  - alert [ref=e43]
 ```

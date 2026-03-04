@@ -11,6 +11,9 @@ import { SUBSCRIPTION_PLANS, SubscriptionPlanId } from "@/lib/config/pricing";
 import { Readable } from "stream";
 import { logger } from "@/lib/logger";
 
+// Vercel config to allow longer execution for file uploads
+export const maxDuration = 300; // 5 minutes
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const HARD_RECORD_LIMIT = 5000; // Safeguard against gigantic files
 
@@ -48,6 +51,18 @@ export async function POST(request: Request) {
 
     const org = user.organization;
 
+    // --- Exchange Rate Safety Check ---
+    const defaultCurrency = org.defaultCurrency as "USD" | "ZiG";
+    const rateObj = await db.exchangeRate.findFirst({ orderBy: { effectiveDate: "desc" }});
+    
+    if (!rateObj && defaultCurrency === 'USD') {
+        return NextResponse.json({ 
+            error: "No exchange rate found in the system. Please update exchange rates in Settings before processing USD payrolls.",
+            code: "MISSING_RATE"
+        }, { status: 400 });
+    }
+    const currentRate = rateObj ? Number(rateObj.rate) : 28.0000;
+
     // Construct Tax Configuration from Org Settings
     const taxConfig = {
         nssaEnabled: org.nssaEnabled,
@@ -58,6 +73,8 @@ export async function POST(request: Request) {
         necRate: org.necRate.toNumber(),
         sdfEnabled: org.sdfEnabled,
         sdfRate: org.sdfRate.toNumber(),
+        exchangeRate: currentRate,
+        defaultCurrency
     };
 
     // White-Label Config
@@ -171,7 +188,6 @@ export async function POST(request: Request) {
     }
 
     // 6. Deduct Credit (if applicable)
-    // Only deduct after successful parsing and limit checks passed.
     if (access.method === "CREDIT") {
         await db.organization.update({
             where: { id: org.id },
@@ -180,8 +196,9 @@ export async function POST(request: Request) {
     }
 
     // 7. Audit Log (Prisma)
+    let auditLogId = "generated-id";
     try {
-        await db.auditLog.create({
+        const log = await db.auditLog.create({
             data: {
                 organizationId: org.id,
                 userId: user.id,
@@ -192,10 +209,13 @@ export async function POST(request: Request) {
                 recordCount: recordCount,
                 metadata: { 
                     processingTimeMs: Date.now() - startTime,
-                    method: access.method // Log if CREDIT was used
+                    method: access.method,
+                    exchangeRateUsed: currentRate,
+                    version: "1.1"
                 }
             }
         });
+        auditLogId = log.id;
     } catch (dbError) {
         logger.error({ err: dbError }, "Failed to write audit log");
     }
@@ -206,18 +226,23 @@ export async function POST(request: Request) {
 
     logger.info({ orgId: org.id, records: recordCount, method: access.method }, "File processed successfully");
 
+    // NOTE: In the real Dokploy environment, you would push 'processedData' to BullMQ here 
+    // to generate the ZIP asynchronously to avoid OOM errors. 
+    // Example: await queue.add("generate-zip", { data: processedData, orgId, auditId });
+
     return NextResponse.json({
         message: "Processing complete",
         processedRecords: recordCount,
-        data: processedData, // Return processed data
-        auditId: "generated-id", // Placeholder
+        data: processedData, 
+        auditId: auditLogId, 
         meta: {
             isWhiteLabeled,
             logoUrl: effectiveLogoUrl,
             orgName: org.name,
             tin: org.tin,
             creditsUsed: access.method === "CREDIT" ? 1 : 0,
-            generatedAt: new Date().toISOString()
+            generatedAt: new Date().toISOString(),
+            exchangeRateUsed: currentRate
         }
     });
 
