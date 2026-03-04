@@ -4,7 +4,7 @@ import { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2, Download, Table, HelpCircle } from "lucide-react";
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, Download, Table, HelpCircle, XCircle, RefreshCw } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { generateBatchZip } from "@/lib/pdf-generator";
 import { saveAs } from "file-saver";
@@ -19,6 +19,11 @@ export default function UploadPage() {
   const [processingMonth, setProcessingMonth] = useState<number>(new Date().getMonth() + 1);
   const [glFormat, setGlFormat] = useState<GLFormat>("STANDARD");
   
+  // Progress and Retry State
+  const [progress, setProgress] = useState(0);
+  const [xhrRequest, setXhrRequest] = useState<XMLHttpRequest | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string>("There was an error processing your file. Please check your connection and try again.");
+
   // Mapping State
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<Partial<ColumnMapping>>({});
@@ -30,6 +35,7 @@ export default function UploadPage() {
       setResult(null);
       setMapping({});
       setCsvHeaders([]);
+      setProgress(0);
     }
   };
 
@@ -42,47 +48,89 @@ export default function UploadPage() {
     saveAs(blob, "payroll_sample.csv");
   };
 
-  const handleUpload = async () => {
+  const handleUpload = () => {
     if (!file) return;
 
     setStatus("uploading");
+    setProgress(0);
+    setErrorMessage("There was an error processing your file. Please check your connection and try again.");
+    
     const formData = new FormData();
     formData.append("file", file);
     formData.append("processingMonth", processingMonth.toString());
     
-    // Send mapping if we have it
     if (Object.keys(mapping).length > 0) {
         formData.append("mapping", JSON.stringify(mapping));
     }
 
-    try {
-      const res = await fetch("/api/ephemeral/process", {
-        method: "POST",
-        body: formData,
-      });
+    const xhr = new XMLHttpRequest();
+    setXhrRequest(xhr);
 
-      const data = await res.json();
-
-      if (res.status === 422 && data.code === "MAPPING_REQUIRED") {
-        setCsvHeaders(data.headers);
-        setStatus("mapping");
-        // Pre-fill mapping with guesses if possible? 
-        // For now start empty or user selects.
-        return;
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        setProgress(percentComplete);
       }
+    };
 
-      if (!res.ok) throw new Error(data.error || "Upload failed");
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          setResult(data);
+          setStatus("success");
+        } catch (e) {
+          setErrorMessage("Failed to parse server response.");
+          setStatus("error");
+        }
+      } else if (xhr.status === 422) {
+         try {
+             const data = JSON.parse(xhr.responseText);
+             if (data.code === "MAPPING_REQUIRED") {
+                 setCsvHeaders(data.headers);
+                 setStatus("mapping");
+             } else {
+                 setErrorMessage(data.error || "Validation failed.");
+                 setStatus("error");
+             }
+         } catch(e) {
+             setStatus("error");
+         }
+      } else {
+         try {
+             const data = JSON.parse(xhr.responseText);
+             setErrorMessage(data.error || `Server error: ${xhr.status}`);
+         } catch(e) {
+             setErrorMessage(`Server error: ${xhr.status}`);
+         }
+         setStatus("error");
+      }
+      setXhrRequest(null);
+    };
 
-      setResult(data);
-      setStatus("success");
-    } catch (error) {
-      console.error(error);
+    xhr.onerror = () => {
+      setErrorMessage("Network error occurred. The connection may be too slow or dropped.");
       setStatus("error");
+      setXhrRequest(null);
+    };
+
+    xhr.onabort = () => {
+      setStatus("idle");
+      setXhrRequest(null);
+      setProgress(0);
+    };
+
+    xhr.open("POST", "/api/ephemeral/process");
+    xhr.send(formData);
+  };
+
+  const cancelUpload = () => {
+    if (xhrRequest) {
+      xhrRequest.abort();
     }
   };
 
   const submitMapping = () => {
-    // Validate mapping (ensure required fields are mapped)
     if (!mapping.employeeId || !mapping.name || !mapping.basicSalary) {
         alert("Please map at least ID, Name, and Basic Salary.");
         return;
@@ -273,6 +321,7 @@ export default function UploadPage() {
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     value={processingMonth}
                     onChange={(e) => setProcessingMonth(parseInt(e.target.value))}
+                    disabled={status === "uploading"}
                  >
                     {Array.from({length: 12}, (_, i) => i + 1).map(m => (
                         <option key={m} value={m}>{new Date(0, m - 1).toLocaleString('default', { month: 'long' })}</option>
@@ -292,6 +341,7 @@ export default function UploadPage() {
                           type="file"
                           accept=".csv"
                           onChange={handleFileChange}
+                          disabled={status === "uploading"}
                           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                        />
                     </div>
@@ -299,34 +349,40 @@ export default function UploadPage() {
               </div>
 
               {file && (
-                 <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-lg">
-                    <FileText className="h-5 w-5 text-blue-500" />
-                    <div className="flex-1 grid gap-1">
-                       <p className="text-sm font-medium leading-none">{file.name}</p>
-                       <p className="text-xs text-muted-foreground">
-                          {(file.size / 1024).toFixed(2)} KB
-                       </p>
+                 <div className="flex flex-col gap-2 p-4 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-blue-500" />
+                      <div className="flex-1 grid gap-1">
+                         <p className="text-sm font-medium leading-none">{file.name}</p>
+                         <p className="text-xs text-muted-foreground">
+                            {(file.size / 1024).toFixed(2)} KB
+                         </p>
+                      </div>
                     </div>
+                    {status === "uploading" && (
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-2">
+                           <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
+                        </div>
+                    )}
                  </div>
               )}
 
-              <Button 
-                 onClick={handleUpload} 
-                 disabled={!file || status === "uploading"} 
-                 className="w-full"
-              >
-                 {status === "uploading" ? (
-                    <>
-                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                       Processing...
-                    </>
-                 ) : (
-                    <>
-                       <Upload className="mr-2 h-4 w-4" />
-                       Process Payroll
-                    </>
-                 )}
-              </Button>
+              {status === "uploading" ? (
+                 <Button variant="destructive" onClick={cancelUpload} className="w-full">
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Cancel Upload ({progress}%)
+                 </Button>
+              ) : (
+                 <Button 
+                    onClick={handleUpload} 
+                    disabled={!file} 
+                    className="w-full"
+                 >
+                    <Upload className="mr-2 h-4 w-4" />
+                    Process Payroll
+                 </Button>
+              )}
+
            </CardContent>
            <CardFooter className="flex-col items-start gap-2 border-t bg-muted/20 p-6">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -350,10 +406,14 @@ export default function UploadPage() {
                        Processing Failed
                     </CardTitle>
                  </CardHeader>
-                 <CardContent>
+                 <CardContent className="space-y-4">
                     <p className="text-sm text-red-800 dark:text-red-200">
-                       There was an error processing your file. Please check the CSV format and try again.
+                       {errorMessage}
                     </p>
+                    <Button variant="outline" onClick={handleUpload} className="w-full bg-white dark:bg-transparent">
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Retry Processing
+                    </Button>
                  </CardContent>
               </Card>
            )}

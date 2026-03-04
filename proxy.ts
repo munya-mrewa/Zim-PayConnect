@@ -2,7 +2,35 @@ import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
 
+const rateLimitMap = new Map<string, { count: number; expiresAt: number }>();
+const MAX_REQUESTS_PER_MINUTE = 100;
+
 export async function middleware(req: NextRequest) {
+  // Basic Rate Limiting
+  const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "127.0.0.1";
+  const now = Date.now();
+  
+  const record = rateLimitMap.get(ip);
+  if (record) {
+    if (now > record.expiresAt) {
+      rateLimitMap.set(ip, { count: 1, expiresAt: now + 60000 });
+    } else {
+      if (record.count >= MAX_REQUESTS_PER_MINUTE) {
+        return new NextResponse("Too Many Requests", { status: 429 });
+      }
+      record.count += 1;
+    }
+  } else {
+    rateLimitMap.set(ip, { count: 1, expiresAt: now + 60000 });
+  }
+  
+  // Clean up old entries occasionally (rough estimate)
+  if (Math.random() < 0.01) {
+    for (const [key, val] of rateLimitMap.entries()) {
+      if (now > val.expiresAt) rateLimitMap.delete(key);
+    }
+  }
+
   const token = await getToken({ req });
   const isAuth = !!token;
 

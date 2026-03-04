@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hash } from "bcryptjs";
 import { z } from "zod";
+import crypto from "crypto";
+import { logger } from "@/lib/logger";
 
 const resetPasswordSchema = z.object({
   resetToken: z.string().min(1, "Reset token is required"),
@@ -21,11 +23,12 @@ export async function POST(req: Request) {
     }
 
     const { resetToken, newPassword } = result.data;
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
 
     // Find user with valid token and not expired
     const user = await db.user.findFirst({
       where: {
-        resetToken,
+        resetToken: hashedToken,
         resetTokenExpires: { gt: new Date() },
       },
     });
@@ -50,13 +53,15 @@ export async function POST(req: Request) {
       },
     });
 
+    logger.info({ userId: user.id }, "Password reset successful");
+
     return NextResponse.json(
       { message: "Password reset successfully" },
       { status: 200 }
     );
 
   } catch (error) {
-    console.error("Reset Password Error:", error);
+    logger.error({ err: error }, "Reset Password Error");
     return NextResponse.json(
       { message: "Internal Server Error" },
       { status: 500 }

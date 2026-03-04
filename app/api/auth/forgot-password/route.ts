@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import crypto from "crypto";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -22,12 +23,13 @@ export async function POST(req: Request) {
 
     // Generate Token
     const resetToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
     const resetTokenExpires = new Date(Date.now() + 3600000); // 1 hour
 
     await db.user.update({
       where: { id: user.id },
       data: {
-        resetToken,
+        resetToken: hashedToken,
         resetTokenExpires,
       },
     });
@@ -47,10 +49,12 @@ export async function POST(req: Request) {
       `,
     });
 
+    logger.info({ userId: user.id }, "Password reset email sent");
+
     return new NextResponse("If an account exists, a reset email has been sent.", { status: 200 });
 
   } catch (error) {
-    console.error("Forgot Password Error:", error);
+    logger.error({ err: error }, "Forgot Password Error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

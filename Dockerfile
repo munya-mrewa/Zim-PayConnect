@@ -30,6 +30,7 @@ WORKDIR /app
 
 # Set NODE_ENV to production
 ENV NODE_ENV production
+ENV HOSTNAME "0.0.0.0"
 
 # Uncomment the following line in case you want to disable telemetry during runtime.
 # ENV NEXT_TELEMETRY_DISABLED 1

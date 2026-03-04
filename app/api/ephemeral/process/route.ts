@@ -9,6 +9,10 @@ import { validateRecord } from "@/lib/ephemeral-engine/validator";
 import { checkProcessingAccess } from "@/lib/auth/subscription";
 import { SUBSCRIPTION_PLANS, SubscriptionPlanId } from "@/lib/config/pricing";
 import { Readable } from "stream";
+import { logger } from "@/lib/logger";
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const HARD_RECORD_LIMIT = 5000; // Safeguard against gigantic files
 
 export async function POST(request: Request) {
   const startTime = Date.now();
@@ -70,20 +74,8 @@ export async function POST(request: Request) {
         }, { status: 403 });
     }
 
-    // If using Credit, we verify they have it (already done in checkProcessingAccess),
-    // but we deduct ONLY after successful processing to prevent loss on errors.
-
     // 3. Get Plan Limits
-    // If credit, we use a fallback "Pay-Per-Process" limit or the stored tier limit?
-    // Let's assume Credit users get MICRO limits (10 employees) unless they have a higher tier expired?
-    // Actually, Pay-Per-Process should probably support more employees if they pay for it.
-    // For now, if CREDIT, we use 'MICRO' limits as default if tier is missing or expired.
-    // Or we can say Pay-Per-Process allows up to 50 employees (Standard).
-    
     let planId = org.subscriptionTier as SubscriptionPlanId;
-    // If expired/trial ended, but we allowed via CREDIT, we should probably enforce a decent limit.
-    // Let's stick to the stored tier for simplicity, or default to MICRO if invalid.
-    
     const plan = SUBSCRIPTION_PLANS.find(p => p.id === planId) || SUBSCRIPTION_PLANS[0]; 
 
     // 4. Parse File
@@ -105,12 +97,16 @@ export async function POST(request: Request) {
         try {
             mapping = JSON.parse(mappingJson);
         } catch (e) {
-            console.warn("Invalid mapping JSON");
+            logger.warn("Invalid mapping JSON");
         }
     }
 
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: "File exceeds 5MB size limit" }, { status: 400 });
     }
 
     // STREAM-BASED PARSING START
@@ -123,6 +119,10 @@ export async function POST(request: Request) {
 
     try {
         for await (const record of parseCSVStream(nodeStream, mapping)) {
+            if (processedCount >= HARD_RECORD_LIMIT) {
+                return NextResponse.json({ error: `File exceeds maximum allowed records (${HARD_RECORD_LIMIT})` }, { status: 400 });
+            }
+
             const validation = validateRecord(record);
             // Merge org config with request-specific config (processingMonth)
             const requestConfig = { ...taxConfig, processingMonth };
@@ -197,12 +197,14 @@ export async function POST(request: Request) {
             }
         });
     } catch (dbError) {
-        console.error("Failed to write audit log:", dbError);
+        logger.error({ err: dbError }, "Failed to write audit log");
     }
 
     // 8. White-label Check
     const isWhiteLabeled = (['AGENCY', 'ENTERPRISE'] as SubscriptionPlanId[]).includes(plan.id);
     const effectiveLogoUrl = isWhiteLabeled ? logoUrl : null;
+
+    logger.info({ orgId: org.id, records: recordCount, method: access.method }, "File processed successfully");
 
     return NextResponse.json({
         message: "Processing complete",
@@ -220,7 +222,7 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
-    console.error("Processing failed:", error);
+    logger.error({ err: error }, "Processing failed");
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

@@ -25,6 +25,6 @@
 *   **Value:** Critical for Accounting Firms who want to resell this service to their clients.
 
 ### Pay-Per-Process (Micro-transactions)
-*   **Status:** 📅 Planned
+*   **Status:** ✅ Completed
 *   **Suggestion:** Add a "Pay-as-you-go" option for one-off users (e.g., $5 for a single report).
 *   **Value:** Captures the "freelancer/small startup" market segment who don't need a monthly sub.

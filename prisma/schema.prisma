@@ -87,7 +87,7 @@ model Organization {
   // Subscription Details
   subscriptionTier   String   @default("MICRO") // MICRO, BUSINESS, AGENCY, ENTERPRISE
   subscriptionStatus String   @default("TRIAL") // TRIAL, ACTIVE, PAST_DUE, CANCELLED
-  trialEndsAt        DateTime @default(dbgenerated("NOW() + interval '3 days'"))
+  trialEndsAt        DateTime @default(dbgenerated("NOW() + interval '7 days'"))
   subscriptionEndsAt DateTime?
   gracePeriodEndsAt  DateTime? // Grace period for manual renewal
   paynowPollUrl      String?
@@ -105,6 +105,28 @@ model Organization {
   auditLogs     AuditLog[]
   apiKeys       ApiKey[]
   webhooks      WebhookEndpoint[]
+  transactions  PaymentTransaction[]
+}
+
+// Transactions for idempotency & invoicing
+model PaymentTransaction {
+  id             String   @id @default(cuid())
+  reference      String   @unique
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  amount         Decimal?
+  currency       String?  @default("USD")
+  status         String   // e.g., "PAID", "PENDING", "FAILED"
+  type           String   // e.g., "CREDIT", "SUBSCRIPTION", "EXTRA_CLIENT"
+  description    String?
+  invoiceUrl     String?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([reference])
 }
 
 // API Keys (Enterprise)

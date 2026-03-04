@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getPesepay } from "@/lib/pesepay";
 import { getPlanById } from "@/lib/config/pricing";
+import { logger } from "@/lib/logger";
+import { sendEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
   try {
@@ -16,7 +18,7 @@ export async function POST(req: Request) {
             pollUrl = json.pollUrl || json.pollurl;
             reference = json.reference || json.referenceNumber;
         } catch (e) {
-            console.error("Failed to parse JSON webhook", e);
+            logger.error({ err: e }, "Failed to parse JSON webhook");
         }
     } else {
         const params = new URLSearchParams(text);
@@ -28,6 +30,28 @@ export async function POST(req: Request) {
       return new NextResponse("Missing pollurl or reference", { status: 400 });
     }
 
+    // Webhook Idempotency Check
+    const existingTx = await db.paymentTransaction.findUnique({
+      where: { reference },
+    });
+
+    if (existingTx?.status === "PAID") {
+      logger.info({ reference }, "Webhook idempotency: transaction already processed and PAID");
+      return new NextResponse("OK", { status: 200 });
+    }
+
+    // Security check: ensure pollUrl is actually pointing to Pesepay domain
+    try {
+        const urlObj = new URL(pollUrl);
+        if (process.env.NODE_ENV === "production" && urlObj.hostname !== "api.pesepay.com") {
+             logger.error({ pollUrl }, "Invalid pollUrl hostname for Pesepay webhook");
+             return new NextResponse("Invalid pollurl", { status: 400 });
+        }
+    } catch (e) {
+        logger.error({ err: e, pollUrl }, "Invalid pollUrl format");
+        return new NextResponse("Invalid pollurl", { status: 400 });
+    }
+
     const pesepay = getPesepay();
     
     // Verify status from Pesepay directly
@@ -37,7 +61,7 @@ export async function POST(req: Request) {
       // Parse reference: OrgID | TierID/Type | Qty/Timestamp
       const parts = reference.split("|");
       if (parts.length < 2) {
-        console.error("Invalid reference format:", reference);
+        logger.error({ reference }, "Invalid reference format");
         return new NextResponse("Invalid reference format", { status: 400 });
       }
 
@@ -51,9 +75,13 @@ export async function POST(req: Request) {
         return new NextResponse("Organization not found", { status: 404 });
       }
 
+      let description = "";
+      let transactionType = typeOrTier;
+
       // Handle Credit Purchase
       if (typeOrTier === "CREDIT") {
          const qty = parseInt(param3 || "1", 10);
+         description = `Purchased ${qty} Processing Credits`;
          
          await db.organization.update({
             where: { id: orgId },
@@ -73,9 +101,10 @@ export async function POST(req: Request) {
             }
          });
 
-         console.log(`Credits (${qty}) added for Org ${orgId}`);
+         logger.info(`Credits (${qty}) added for Org ${orgId}`);
 
       } else if (typeOrTier === "EXTRA_CLIENT") {
+          description = "Purchased 1 Extra Client Slot";
           // Handle Extra Client Slot
           await db.organization.update({
               where: { id: orgId },
@@ -90,20 +119,23 @@ export async function POST(req: Request) {
                 organizationId: orgId,
                 action: "UPDATE_SETTINGS", // Or similar
                 status: "SUCCESS",
-                metadata: { description: "Purchased Extra Client Slot", gateway: "PESEPAY" }
+                metadata: { description, gateway: "PESEPAY" }
             }
          });
-         console.log(`Extra Client Slot added for Org ${orgId}`);
+         logger.info(`Extra Client Slot added for Org ${orgId}`);
 
       } else {
          // Handle Subscription Purchase (Standard)
+          transactionType = "SUBSCRIPTION";
           const tierId = typeOrTier;
           const plan = getPlanById(tierId);
           
           if (!plan) {
-            console.error("Unknown plan in reference:", tierId);
+            logger.error({ tierId }, "Unknown plan in reference");
             return new NextResponse("Unknown plan", { status: 400 });
           }
+
+          description = `Subscription to ${plan.name} Plan`;
 
           // Calculate new end date
           let newEndDate = new Date();
@@ -130,14 +162,48 @@ export async function POST(req: Request) {
             },
           });
 
-          console.log(`Subscription activated for Org ${orgId} - Tier ${tierId}`);
+          logger.info(`Subscription activated for Org ${orgId} - Tier ${tierId}`);
+      }
+
+      // Record Transaction for Idempotency and Invoicing
+      await db.paymentTransaction.upsert({
+        where: { reference },
+        update: { status: "PAID", description },
+        create: {
+          reference,
+          organizationId: orgId,
+          status: "PAID",
+          type: transactionType,
+          description,
+        }
+      });
+
+      // Send Invoice/Receipt Email
+      if (org.contactEmail) {
+         try {
+            await sendEmail({
+               to: org.contactEmail,
+               subject: `Payment Receipt: ${description}`,
+               html: `
+                 <h2>Payment Successful</h2>
+                 <p>Thank you for your payment.</p>
+                 <p><strong>Item:</strong> ${description}</p>
+                 <p><strong>Reference:</strong> ${reference}</p>
+                 <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                 <br />
+                 <p>You can download your PDF receipt from the Billing section of your dashboard.</p>
+               `
+            });
+         } catch (e) {
+            logger.error({ err: e, orgId }, "Failed to send receipt email");
+         }
       }
     }
 
     return new NextResponse("OK", { status: 200 });
 
   } catch (error) {
-    console.error("Webhook Error:", error);
+    logger.error({ err: error }, "Webhook Error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
