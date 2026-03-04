@@ -9,19 +9,19 @@ test.describe('Critical Flow: Register -> Upload -> Download', () => {
   test('User can register, login, upload payroll, and see history', async ({ page }) => {
     // 1. Register
     await page.goto('/register');
-    await page.fill('input[name="name"]', 'Test User');
-    await page.fill('input[name="email"]', testEmail);
-    await page.fill('input[name="orgName"]', 'Test Organization');
-    await page.fill('input[name="password"]', testPassword);
-    await page.click('button[type="submit"]');
+    await page.getByLabel('Full Name').fill('Test User');
+    await page.getByLabel('Email').fill(testEmail);
+    await page.getByLabel('Organization Name').fill('Test Organization');
+    await page.getByLabel('Password').fill(testPassword);
+    await page.getByRole('button', { name: 'Register' }).click();
 
     // Wait for redirect to login page
     await expect(page).toHaveURL(/.*\/login/);
 
     // 2. Login
-    await page.fill('input[name="email"]', testEmail);
-    await page.fill('input[name="password"]', testPassword);
-    await page.click('button[type="submit"]');
+    await page.getByLabel('Email').fill(testEmail);
+    await page.getByLabel('Password').fill(testPassword);
+    await page.getByRole('button', { name: 'Sign In' }).click();
 
     // Wait for redirect to dashboard
     await expect(page).toHaveURL(/.*\/dashboard/);

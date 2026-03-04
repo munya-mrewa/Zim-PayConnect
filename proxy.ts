@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 const rateLimitMap = new Map<string, { count: number; expiresAt: number }>();
 const MAX_REQUESTS_PER_MINUTE = 100;
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   // Basic Rate Limiting
   const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "127.0.0.1";
   const now = Date.now();
