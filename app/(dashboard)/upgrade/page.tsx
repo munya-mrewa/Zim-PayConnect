@@ -16,7 +16,7 @@ export default async function UpgradePage() {
         select: { subscriptionStatus: true, trialEndsAt: true }
     });
 
-    // Check if user is in trial. 
+    // Check if user is in trial.
     // We consider them in "Trial Selection Mode" if the status is TRIAL.
     // We also check if the trial has expired, but the prompt implies they can choose "on the free trial until it ends".
     // If trial ends, they must pay.
@@ -31,12 +31,12 @@ export default async function UpgradePage() {
                     {isTrial ? "Select Your Trial Plan" : "Upgrade Your Plan"}
                 </h2>
                 <p className="text-muted-foreground">
-                    {isTrial 
-                        ? "Choose the plan you want to use during your 3-day free trial." 
+                    {isTrial
+                        ? "Choose the plan you want to use during your 7-day free trial."
                         : "Select a plan to upgrade your account."}
                 </p>
             </div>
-            
+
             <PricingSection isTrial={isTrial} />
         </div>
     );

@@ -118,7 +118,7 @@ export default function UserGuidePage() {
           </CardHeader>
           <CardContent>
             <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
-              <li>Start with a <strong>3-Day Free Trial</strong>.</li>
+              <li>Start with a <strong>7-Day Free Trial</strong>.</li>
               <li>Subscribe monthly for unlimited processing.</li>
               <li>Or buy <strong>Credits</strong> for pay-as-you-go.</li>
               <li>Secure payments via Pesepay (EcoCash, Visa/Mastercard).</li>

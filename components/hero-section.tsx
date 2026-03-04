@@ -88,7 +88,7 @@ export function HeroSection() {
                 element?.scrollIntoView({ behavior: "smooth" });
               }}
             >
-              Start 3-Day Free Trial
+              Start 7-Day Free Trial
             </Button>
             <Link href="/user-guide">
               <Button size="lg" variant="outline" className="min-w-[200px] border-zinc-700 hover:border-white/50 text-zinc-300 hover:text-white">
