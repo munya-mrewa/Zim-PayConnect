@@ -1,8 +1,8 @@
 export const siteConfig = {
   name: "Zim-PayConnect",
   description: "ZIMRA TaRMS 2025-2026 Compliant Payroll Engine. Secure, ephemeral payroll processing. Automates FDS/Non-FDS splitting, ZiG/USD tax forecasting, and December Reconciliation.",
-  url: process.env.NEXT_PUBLIC_APP_URL || "https://zim-payconnect.com",
-  ogImage: "https://zim-payconnect.com/og.jpg",
+  url: process.env.NEXT_PUBLIC_APP_URL || "https://zimpayconnect.online",
+  ogImage: "https://zimpayconnect.online/og.jpg",
   links: {
     twitter: "https://twitter.com/zimpayconnect",
     github: "https://github.com/zimpayconnect",
@@ -25,10 +25,11 @@ export const siteConfig = {
   authors: [
     {
       name: "Zim-PayConnect Team",
-      url: "https://zim-payconnect.com",
+      url: "https://zimpayconnect.online",
     },
   ],
   creator: "Zim-PayConnect",
+  googleSiteVerificationId: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION_ID || "YOUR_GOOGLE_VERIFICATION_ID_HERE",
 };
 
 export type SiteConfig = typeof siteConfig;
