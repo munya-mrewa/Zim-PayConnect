@@ -1,6 +1,6 @@
 export const siteConfig = {
   name: "Zim-PayConnect",
-  description: "ZIMRA TaRMS 2025-2026 Compliant Payroll Engine. Secure, ephemeral payroll processing for Zimbabwean businesses.",
+  description: "ZIMRA TaRMS 2025-2026 Compliant Payroll Engine. Secure, ephemeral payroll processing. Automates FDS/Non-FDS splitting, ZiG/USD tax forecasting, and December Reconciliation.",
   url: process.env.NEXT_PUBLIC_APP_URL || "https://zim-payconnect.com",
   ogImage: "https://zim-payconnect.com/og.jpg",
   links: {
@@ -8,18 +8,19 @@ export const siteConfig = {
     github: "https://github.com/zimpayconnect",
   },
   keywords: [
-    "ZIMRA",
-    "TaRMS",
-    "Payroll",
-    "Zimbabwe",
-    "Tax",
+    "ZIMRA TaRMS payroll software 2025",
+    "FDS and Non-FDS payroll split tool",
+    "Zimbabwe PAYE calculator ZiG and USD",
+    "ZIMRA employee management module upload",
+    "ITF16 alternative Zimbabwe",
+    "Secure payroll processing Zimbabwe",
+    "Payroll software Zimbabwe",
+    "TaRMS compliance tool",
     "NSSA",
     "NEC",
     "Payslip",
     "Compliance",
-    "Payroll Software",
-    "ZiG",
-    "USD Payroll",
+    "Ephemeral Engine",
   ],
   authors: [
     {
