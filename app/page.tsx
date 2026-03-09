@@ -54,6 +54,16 @@ export default function LandingPage() {
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@type": "Organization",
+        "name": "Zim-PayConnect",
+        "url": siteConfig.url,
+        "logo": `${siteConfig.url}/icon.png`,
+        "sameAs": [
+          "https://twitter.com/zimpayconnect",
+          "https://github.com/zimpayconnect"
+        ]
+      },
+      {
         "@type": "SoftwareApplication",
         "name": "Ephemeral Engine",
         "applicationCategory": "FinanceApplication",
