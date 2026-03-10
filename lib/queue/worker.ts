@@ -30,22 +30,34 @@ interface ProcessingJobData {
     removeBranding: boolean;
 }
 
+import { getPostHog } from "@/lib/posthog-node";
+
 // Main Payroll Worker
 export const payrollWorker = new Worker(
   "payroll-processing",
   async (job: Job<ProcessingJobData>) => {
     const { records, taxConfig, orgInfo, auditId, removeBranding } = job.data;
-    
+    const posthog = getPostHog();
+
     logger.info({ jobId: job.id, orgId: orgInfo.id, recordCount: records.length }, "Starting background payroll processing");
 
+    // Track start
+    posthog?.capture({
+      distinctId: orgInfo.id,
+      event: 'payroll_processing_started',
+      properties: { 
+        jobId: job.id, 
+        recordCount: records.length,
+        method: taxConfig.defaultCurrency
+      }
+    });
+
     try {
-        // 1. Perform Calculations
         const processedRecords = records.map(record => ({
             ...record,
             taxResult: calculateTax(record, taxConfig)
         }));
 
-        // 2. Generate ZIP
         const zipBlob = await generateBatchZip(
             processedRecords, 
             orgInfo.name, 
@@ -54,11 +66,9 @@ export const payrollWorker = new Worker(
             removeBranding
         );
 
-        // 3. Save to Encrypted Store
         const arrayBuffer = await zipBlob.arrayBuffer();
         const fileId = await saveZip(Buffer.from(arrayBuffer), orgInfo.id);
 
-        // 4. Update Audit Log with Success
         await db.auditLog.update({
             where: { id: auditId },
             data: { 
@@ -72,12 +82,34 @@ export const payrollWorker = new Worker(
             }
         });
 
+        // Track success
+        posthog?.capture({
+            distinctId: orgInfo.id,
+            event: 'payroll_processing_success',
+            properties: { 
+                jobId: job.id, 
+                fileId,
+                processingTimeMs: Date.now() - job.timestamp
+            }
+        });
+
         logger.info({ jobId: job.id, fileId }, "Background processing completed successfully");
         
         return { fileId, recordCount: records.length };
     } catch (error: any) {
         logger.error({ jobId: job.id, err: error }, "Background processing failed");
         
+        // Report to PostHog
+        posthog?.capture({
+            distinctId: orgInfo.id,
+            event: 'payroll_processing_failed',
+            properties: { 
+                jobId: job.id, 
+                error: error.message,
+                stack: error.stack
+            }
+        });
+
         await db.auditLog.update({
             where: { id: auditId },
             data: { 
@@ -89,7 +121,7 @@ export const payrollWorker = new Worker(
         throw error;
     }
   },
-  { connection, concurrency: 2 } // Allow processing 2 jobs at once per worker instance
+  { connection, concurrency: 2 } 
 );
 
 // Cron Worker for Maintenance

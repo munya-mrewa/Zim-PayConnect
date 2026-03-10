@@ -4,6 +4,7 @@ import { getPesepay } from "@/lib/pesepay";
 import { getPlanById } from "@/lib/config/pricing";
 import { logger } from "@/lib/logger";
 import { sendEmail } from "@/lib/email";
+import { getPostHog } from "@/lib/posthog-node";
 
 export async function POST(req: Request) {
   try {
@@ -66,6 +67,7 @@ export async function POST(req: Request) {
       }
 
       const [orgId, typeOrTier, param3] = parts;
+      const posthog = getPostHog();
 
       const org = await db.organization.findUnique({
         where: { id: orgId },
@@ -74,6 +76,21 @@ export async function POST(req: Request) {
       if (!org) {
         return new NextResponse("Organization not found", { status: 404 });
       }
+
+      // Track successful payment in PostHog
+      posthog?.capture({
+          distinctId: orgId,
+          event: 'payment_success',
+          properties: {
+              reference,
+              type: typeOrTier,
+              param: param3,
+              organizationName: org.name,
+              gateway: 'PESEPAY'
+          }
+      });
+      // Ensure event is sent before webhook response
+      posthog?.shutdown();
 
       let description = "";
       let transactionType = typeOrTier;

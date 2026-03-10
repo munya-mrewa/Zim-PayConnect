@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Loader2 } from "lucide-react";
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from "@/lib/config/pricing";
+import posthog from "posthog-js";
 
 interface PricingSectionProps {
   isTrial?: boolean;
@@ -32,6 +33,13 @@ export function PricingSection({ isTrial = false }: PricingSectionProps) {
 
     try {
       if (isTrial) {
+        // Track trial start
+        posthog.capture('trial_started', { 
+            planId: plan.id, 
+            planName: plan.name,
+            price: plan.price 
+        });
+
         const res = await fetch("/api/subscription/update", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -44,6 +52,14 @@ export function PricingSection({ isTrial = false }: PricingSectionProps) {
         router.push("/dashboard");
         return;
       }
+
+      // Track payment initiation
+      posthog.capture('payment_initiated', { 
+          planId: plan.id, 
+          planName: plan.name,
+          amount: plan.price,
+          currency: 'USD'
+      });
 
       const res = await fetch("/api/pesepay/initiate", {
         method: "POST",

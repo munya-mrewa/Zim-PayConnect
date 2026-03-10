@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { PHProvider } from "@/components/providers/PostHogProvider";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/lib/config/site";
 import { PWARegister } from "@/components/pwa-register";
@@ -67,7 +68,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark scroll-smooth">
       <body className={cn(inter.className, "bg-black text-white antialiased")}>
-        <AuthProvider>{children}</AuthProvider>
+        <PHProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </PHProvider>
         <PWARegister />
       </body>
     </html>

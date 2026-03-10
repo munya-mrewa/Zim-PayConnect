@@ -104,12 +104,13 @@ export async function POST(request: Request) {
             organizationId: org.id,
             userId: user.id,
             action: "UPLOAD_PAYROLL",
-            status: "FAILURE", // Default to failure until worker completes
+            status: "FAILURE", // Default until worker succeeds
             fileName: file.name,
             fileSize: file.size,
             recordCount: recordCount,
             metadata: { 
                 startTime: new Date().toISOString(),
+                requestStart: startTime,
                 method: access.method,
                 exchangeRateUsed: currentRate
             }
