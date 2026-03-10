@@ -82,7 +82,7 @@ export async function deleteZip(fileId: string, orgId: string): Promise<void> {
     
     try {
         await fs.unlink(filePath);
-        logger.info({ fileId, orgId }, "Manually deleted ZIP from storage");
+        logger.info({ fileId, orgId, action: "DATA_DISPOSAL" }, "Data Disposal: Encrypted ZIP permanently deleted from short-term storage");
     } catch (e: any) {
         if (e.code !== 'ENOENT') {
             logger.error({ err: e, fileId }, "Failed to delete ZIP");

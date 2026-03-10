@@ -6,14 +6,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, AlertCircle, CheckCircle, Loader2, Download, Table, HelpCircle, XCircle, RefreshCw } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { generateBatchZip } from "@/lib/pdf-generator";
 import { saveAs } from "file-saver";
 import { ColumnMapping } from "@/lib/ephemeral-engine/types";
 import { GLFormat } from "@/lib/ephemeral-engine/gl-exporter";
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error" | "mapping">("idle");
+  const [status, setStatus] = useState<"idle" | "uploading" | "processing" | "success" | "error" | "mapping">("idle");
   const [result, setResult] = useState<any>(null);
   const [generating, setGenerating] = useState(false);
   const [processingMonth, setProcessingMonth] = useState<number>(new Date().getMonth() + 1);
@@ -22,7 +21,7 @@ export default function UploadPage() {
   // Progress and Retry State
   const [progress, setProgress] = useState(0);
   const [xhrRequest, setXhrRequest] = useState<XMLHttpRequest | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string>("There was an error processing your file. Please check your connection and try again.");
+  const [errorMessage, setErrorMessage] = useState<string>("There was an error processing your file.");
 
   // Mapping State
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -48,12 +47,42 @@ export default function UploadPage() {
     saveAs(blob, "payroll_sample.csv");
   };
 
+  const pollJobStatus = async (jobId: string) => {
+    setStatus("processing");
+    
+    const checkStatus = async () => {
+      try {
+        const response = await fetch(`/api/ephemeral/status/${jobId}`);
+        const data = await response.json();
+
+        if (data.status === "completed") {
+          setResult(data);
+          setStatus("success");
+          return true;
+        } else if (data.status === "failed") {
+          setErrorMessage(data.error || "Background processing failed.");
+          setStatus("error");
+          return true;
+        }
+        return false;
+      } catch (e) {
+        console.error("Polling error", e);
+        return false;
+      }
+    };
+
+    // Poll every 2 seconds
+    const interval = setInterval(async () => {
+      const isDone = await checkStatus();
+      if (isDone) clearInterval(interval);
+    }, 2000);
+  };
+
   const handleUpload = () => {
     if (!file) return;
 
     setStatus("uploading");
     setProgress(0);
-    setErrorMessage("There was an error processing your file. Please check your connection and try again.");
     
     const formData = new FormData();
     formData.append("file", file);
@@ -77,8 +106,12 @@ export default function UploadPage() {
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           const data = JSON.parse(xhr.responseText);
-          setResult(data);
-          setStatus("success");
+          if (data.jobId) {
+            pollJobStatus(data.jobId);
+          } else {
+            setResult(data);
+            setStatus("success");
+          }
         } catch (e) {
           setErrorMessage("Failed to parse server response.");
           setStatus("error");
@@ -109,15 +142,9 @@ export default function UploadPage() {
     };
 
     xhr.onerror = () => {
-      setErrorMessage("Network error occurred. The connection may be too slow or dropped.");
+      setErrorMessage("Network error occurred.");
       setStatus("error");
       setXhrRequest(null);
-    };
-
-    xhr.onabort = () => {
-      setStatus("idle");
-      setXhrRequest(null);
-      setProgress(0);
     };
 
     xhr.open("POST", "/api/ephemeral/process");
@@ -140,25 +167,21 @@ export default function UploadPage() {
 
   const handleDownload = async () => {
     if (!result || !result.fileId) {
-        // Fallback for older logic or if fileId isn't present
-        alert("The file ID was not returned. Please try uploading again.");
+        alert("The file ID was not returned.");
         return;
     }
 
     try {
       setGenerating(true);
-      // Navigate to the new download endpoint
       window.location.href = `/api/ephemeral/download?fileId=${result.fileId}`;
-
-      // We don't await anything here because navigating to an attachment endpoint 
-      // will just trigger a download in the browser without leaving the page.
     } catch (error) {
       console.error("Generation failed:", error);
       alert("Failed to download reports.");
     } finally {
-      setGenerating(false);
+      setTimeout(() => setGenerating(false), 2000);
     }
   };
+
   const mapField = (field: keyof ColumnMapping, header: string) => {
     setMapping(prev => ({ ...prev, [field]: header }));
   };
@@ -216,7 +239,6 @@ export default function UploadPage() {
                                 <option value="">Select Column...</option>
                                 {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                             </select>
-                            <p className="text-[10px] text-muted-foreground">Base salary excluding allowances.</p>
                         </div>
                         <div className="space-y-2">
                             <Label>TIN (Optional)</Label>
@@ -239,66 +261,6 @@ export default function UploadPage() {
                                 <option value="">Select Column...</option>
                                 {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                             </select>
-                            <p className="text-[10px] text-muted-foreground">Default: ZiG. Values: USD, ZiG.</p>
-                        </div>
-                         <div className="space-y-2">
-                            <Label>Permanent? (Optional)</Label>
-                            <select 
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                onChange={(e) => mapField("isPermanent", e.target.value)}
-                                value={mapping.isPermanent || ""}
-                            >
-                                <option value="">Select Column...</option>
-                                {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
-                            </select>
-                            <p className="text-[10px] text-muted-foreground">True/False. False = Casual (Flat Tax).</p>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Total Allowances (Optional)</Label>
-                            <select 
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                onChange={(e) => mapField("allowances", e.target.value)}
-                                value={mapping.allowances || ""}
-                            >
-                                <option value="">Select Column...</option>
-                                {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
-                            </select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Tax Exempt Portion (Optional)</Label>
-                            <select 
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                onChange={(e) => mapField("exemptAllowances", e.target.value)}
-                                value={mapping.exemptAllowances || ""}
-                            >
-                                <option value="">Select Column...</option>
-                                {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
-                            </select>
-                            <p className="text-[10px] text-muted-foreground">Amount to subtract from Taxable Income.</p>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>YTD Gross (Optional - FDS)</Label>
-                            <select 
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                onChange={(e) => mapField("ytdGross", e.target.value)}
-                                value={mapping.ytdGross || ""}
-                            >
-                                <option value="">Select Column...</option>
-                                {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
-                            </select>
-                            <p className="text-[10px] text-muted-foreground">Total Gross up to previous month.</p>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>YTD Tax Paid (Optional - FDS)</Label>
-                            <select 
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                onChange={(e) => mapField("ytdTaxPaid", e.target.value)}
-                                value={mapping.ytdTaxPaid || ""}
-                            >
-                                <option value="">Select Column...</option>
-                                {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
-                            </select>
-                            <p className="text-[10px] text-muted-foreground">Total Tax paid up to previous month.</p>
                         </div>
                     </div>
                 </CardContent>
@@ -311,7 +273,7 @@ export default function UploadPage() {
            <CardHeader>
               <CardTitle>Select File</CardTitle>
               <CardDescription>
-                 Upload your payroll CSV file for processing.
+                 Upload your payroll CSV file for background processing.
               </CardDescription>
            </CardHeader>
            <CardContent className="space-y-4">
@@ -322,58 +284,43 @@ export default function UploadPage() {
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     value={processingMonth}
                     onChange={(e) => setProcessingMonth(parseInt(e.target.value))}
-                    disabled={status === "uploading"}
+                    disabled={status !== "idle" && status !== "error"}
                  >
                     {Array.from({length: 12}, (_, i) => i + 1).map(m => (
                         <option key={m} value={m}>{new Date(0, m - 1).toLocaleString('default', { month: 'long' })}</option>
                     ))}
                  </select>
-                 <p className="text-[0.8rem] text-muted-foreground">
-                    Required for accurate FDS calculations.
-                 </p>
               </div>
 
               <div className="grid w-full max-w-sm items-center gap-1.5">
                  <Label htmlFor="payroll-file">Payroll CSV</Label>
-                 <div className="flex items-center gap-4">
-                    <div className="grid w-full max-w-sm items-center gap-1.5">
-                       <input
-                          id="payroll-file"
-                          type="file"
-                          accept=".csv"
-                          onChange={handleFileChange}
-                          disabled={status === "uploading"}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                       />
-                    </div>
-                 </div>
+                 <input
+                    id="payroll-file"
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileChange}
+                    disabled={status !== "idle" && status !== "error"}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                 />
               </div>
 
-              {file && (
+              {(status === "uploading" || status === "processing") && (
                  <div className="flex flex-col gap-2 p-4 bg-muted/50 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-blue-500" />
-                      <div className="flex-1 grid gap-1">
-                         <p className="text-sm font-medium leading-none">{file.name}</p>
-                         <p className="text-xs text-muted-foreground">
-                            {(file.size / 1024).toFixed(2)} KB
-                         </p>
-                      </div>
+                      <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+                      <p className="text-sm font-medium">
+                        {status === "uploading" ? `Uploading... ${progress}%` : "Processing in background..."}
+                      </p>
                     </div>
                     {status === "uploading" && (
-                        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
                            <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
                         </div>
                     )}
                  </div>
               )}
 
-              {status === "uploading" ? (
-                 <Button variant="destructive" onClick={cancelUpload} className="w-full">
-                    <XCircle className="mr-2 h-4 w-4" />
-                    Cancel Upload ({progress}%)
-                 </Button>
-              ) : (
+              {status === "idle" || status === "error" ? (
                  <Button 
                     onClick={handleUpload} 
                     disabled={!file} 
@@ -382,17 +329,16 @@ export default function UploadPage() {
                     <Upload className="mr-2 h-4 w-4" />
                     Process Payroll
                  </Button>
-              )}
+              ) : status === "uploading" ? (
+                 <Button variant="destructive" onClick={cancelUpload} className="w-full">
+                    Cancel Upload
+                 </Button>
+              ) : null}
 
            </CardContent>
            <CardFooter className="flex-col items-start gap-2 border-t bg-muted/20 p-6">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                 <AlertCircle className="h-4 w-4" />
-                 <span>Ephemeral Processing Mode</span>
-              </div>
               <p className="text-xs text-muted-foreground">
-                 Your file will be processed in-memory. No employee data (names, salaries, TINs) will be saved to our database.
-                 Once the output files are generated, the raw data is permanently destroyed.
+                 Ephemeral Mode: No employee data is saved. ZIPs are encrypted and deleted after 24h.
               </p>
            </CardFooter>
         </Card>
@@ -400,86 +346,50 @@ export default function UploadPage() {
 
         <div className="space-y-6">
            {status === "error" && (
-              <Card className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-900">
+              <Card className="border-red-200 bg-red-50">
                  <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                    <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
-                    <CardTitle className="text-lg font-medium text-red-900 dark:text-red-300">
-                       Processing Failed
-                    </CardTitle>
+                    <AlertCircle className="h-5 w-5 text-red-600" />
+                    <CardTitle className="text-lg font-medium">Processing Failed</CardTitle>
                  </CardHeader>
-                 <CardContent className="space-y-4">
-                    <p className="text-sm text-red-800 dark:text-red-200">
-                       {errorMessage}
-                    </p>
-                    <Button variant="outline" onClick={handleUpload} className="w-full bg-white dark:bg-transparent">
-                        <RefreshCw className="mr-2 h-4 w-4" />
-                        Retry Processing
-                    </Button>
+                 <CardContent>
+                    <p className="text-sm text-red-800">{errorMessage}</p>
+                    <Button variant="outline" onClick={() => setStatus("idle")} className="w-full mt-4">Try Again</Button>
                  </CardContent>
               </Card>
            )}
 
            {status === "success" && result && (
-              <Card className="border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-900">
+              <Card className="border-green-200 bg-green-50">
                  <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                    <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-                    <CardTitle className="text-lg font-medium text-green-900 dark:text-green-300">
-                       Processing Complete
-                    </CardTitle>
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <CardTitle className="text-lg font-medium">Processing Complete</CardTitle>
                  </CardHeader>
                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between text-sm">
-                       <span className="text-green-800 dark:text-green-200">Records Processed:</span>
-                       <span className="font-bold text-green-900 dark:text-green-100">{result.processedRecords}</span>
-                    </div>
+                    <p className="text-sm text-green-800">
+                        Processed {result.recordCount} employees successfully.
+                    </p>
                     
-                    <div className="rounded-md bg-background/50 p-4 font-mono text-xs overflow-auto max-h-[200px] border">
-                       {JSON.stringify(result.data, null, 2)}
-                    </div>
-                    
-                    <div className="space-y-2">
-                        <Label>GL Export Format</Label>
-                        <select 
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            value={glFormat}
-                            onChange={(e) => setGlFormat(e.target.value as GLFormat)}
-                        >
-                            <option value="STANDARD">Standard (Generic CSV)</option>
-                            <option value="SAGE">Sage Pastel (Batch)</option>
-                            <option value="QUICKBOOKS">QuickBooks (CSV)</option>
-                        </select>
-                    </div>
-
                     <div className="flex gap-2">
                        <Button 
-                          variant="outline" 
+                          variant="default" 
                           className="w-full" 
                           onClick={handleDownload}
                           disabled={generating}
                        >
-                          {generating ? (
-                             <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Generating...
-                             </>
-                          ) : (
-                             <>
-                                <Download className="mr-2 h-4 w-4" />
-                                Download Payslips (ZIP)
-                             </>
-                          )}
+                          {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                          Download ZIP
                        </Button>
                     </div>
                  </CardContent>
               </Card>
            )}
            
-           {status === "idle" && !result && (
+           {status === "idle" && (
               <div className="flex h-full items-center justify-center rounded-lg border border-dashed p-8 text-center text-muted-foreground">
                  <div>
                     <FileText className="mx-auto h-10 w-10 opacity-50" />
-                    <h3 className="mt-4 text-lg font-semibold">No Results Yet</h3>
-                    <p className="text-sm">Upload a file to see processing results here.</p>
+                    <h3 className="mt-4 text-lg font-semibold">Ready</h3>
+                    <p className="text-sm">Upload a file to begin processing.</p>
                  </div>
               </div>
            )}

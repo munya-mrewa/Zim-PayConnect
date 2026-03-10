@@ -23,6 +23,13 @@ export async function initCronJobs() {
       { repeat: { pattern: "0 8 * * *" } } // Every day at 08:00
     );
 
+    // Add cleanup for expired ZIPs every 6 hours
+    await cronQueue.add(
+        "cleanup-expired-zips",
+        {},
+        { repeat: { pattern: "0 */6 * * *" } }
+    );
+
     logger.info("Cron jobs initialized in BullMQ");
   } catch (error) {
     logger.error({ err: error }, "Failed to initialize cron jobs");
