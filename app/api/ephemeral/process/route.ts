@@ -94,6 +94,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: `Plan limit exceeded (${plan.maxEmployees} employees).` }, { status: 403 });
     }
 
+    if (access.method === "CREDIT" && recordCount > 100) {
+        return NextResponse.json({ error: "Credit processing is limited to 100 employees per batch." }, { status: 403 });
+    }
+
     // 6. Exchange Rate
     const rateObj = await db.exchangeRate.findFirst({ orderBy: { effectiveDate: "desc" }});
     const currentRate = rateObj ? Number(rateObj.rate) : 28.0000;

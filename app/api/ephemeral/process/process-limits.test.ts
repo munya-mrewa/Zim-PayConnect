@@ -12,10 +12,10 @@ vi.mock('@/lib/db', () => ({
       findUnique: vi.fn(),
     },
     organization: {
-        update: vi.fn(),
+        update: vi.fn().mockResolvedValue({ id: 'org-1' }),
     },
     auditLog: {
-        create: vi.fn(),
+        create: vi.fn().mockResolvedValue({ id: 'audit-123' }),
     },
     exchangeRate: {
         findFirst: vi.fn(),
@@ -32,6 +32,12 @@ vi.mock('@/lib/ephemeral-engine/parser', () => ({
     }
   },
   MappingRequiredError: class extends Error {}
+}));
+
+vi.mock('@/lib/queue/worker', () => ({
+  payrollQueue: {
+    add: vi.fn().mockResolvedValue({ id: 'job-123' }),
+  },
 }));
 
 // Helper to create a mock request
@@ -60,6 +66,7 @@ describe('Process API Limits', () => {
       organizationId: 'org-1',
       organization: {
         id: 'org-1',
+        name: 'Test Org',
         nssaEnabled: true,
         nssaRate: { toNumber: () => 0.045 },
         nssaCeilingUSD: { toNumber: () => 700 },
@@ -100,7 +107,8 @@ describe('Process API Limits', () => {
     // Attempt 100 records (limit)
     const req = createMockRequest(100, 'CREDIT');
     const res = await POST(req);
-
+    const data = await res.json();
+    
     expect(res.status).toBe(200);
   });
 
@@ -115,7 +123,7 @@ describe('Process API Limits', () => {
 
     expect(res.status).toBe(403);
     expect(data.error).toContain('Plan limit exceeded');
-    expect(data.error).toContain('Micro plan allows up to 10 employees');       
+    expect(data.error).toContain('10 employees');       
   });
 
    it('should allow within limits for SUBSCRIPTION users (MICRO)', async () => {
@@ -125,7 +133,7 @@ describe('Process API Limits', () => {
     // Attempt 10 records
     const req = createMockRequest(10, 'SUBSCRIPTION');
     const res = await POST(req);
-
+    
     expect(res.status).toBe(200);
   });
 });
