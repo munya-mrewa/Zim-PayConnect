@@ -8,6 +8,7 @@ import { saveZip } from "@/lib/storage/zip-store";
 import { RawPayrollRecord, TaxConfig } from "@/lib/ephemeral-engine/types";
 import { connection } from "./client";
 import { getPostHog } from "@/lib/posthog-node";
+import { sendSlackAlert } from "@/lib/notifications";
 
 export { cronQueue, payrollQueue } from "./client";
 

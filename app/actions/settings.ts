@@ -25,7 +25,8 @@ export async function updateOrganization(data: SettingsValues) {
     }
 
     const { name, tin, contactEmail, address } = validatedFields.data;
-    const ip = headers().get("x-client-ip") || "unknown";
+    const headerList = await headers();
+    const ip = headerList.get("x-client-ip") || "unknown";
 
     await AuditService.updateOrganization(
       session.user.id,
@@ -68,7 +69,8 @@ export async function updateTaxSettings(data: TaxSettingsValues) {
         autoUpdateRates, currentExchangeRate
     } = validatedFields.data;
 
-    const ip = headers().get("x-client-ip") || "unknown";
+    const headerList = await headers();
+    const ip = headerList.get("x-client-ip") || "unknown";
 
     await AuditService.updateOrganization(
       session.user.id,
