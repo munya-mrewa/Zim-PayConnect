@@ -9,6 +9,8 @@ import { RawPayrollRecord, TaxConfig } from "@/lib/ephemeral-engine/types";
 import { connection } from "./client";
 import { getPostHog } from "@/lib/posthog-node";
 import { sendSlackAlert } from "@/lib/notifications";
+import fs from "fs/promises";
+import path from "path";
 
 export { cronQueue, payrollQueue } from "./client";
 
@@ -142,8 +144,6 @@ export const cronWorker = new Worker(
 
 // Maintenance Logic: Cleanup old ZIPs (Data Disposal)
 async function cleanupExpiredZips() {
-    const fs = require('fs/promises');
-    const path = require('path');
     const STORAGE_DIR = path.join(process.cwd(), 'storage', 'zips');
     const EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 Hours
 

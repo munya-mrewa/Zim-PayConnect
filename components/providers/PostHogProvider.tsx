@@ -15,7 +15,7 @@ if (typeof window !== 'undefined') {
     bootstrap: {
         distinctID: 'anonymous'
     },
-    // @ts-ignore
+    // @ts-expect-error -- defaults property missing in types
     defaults: '2026-01-30'
   })
 }

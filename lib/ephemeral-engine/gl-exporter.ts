@@ -44,7 +44,7 @@ export function generateGLCSV(records: FullRecord[], orgName: string, format: GL
   // 2. Journal Entries (Double Entry)
   
   let header = "";
-  let rows: string[] = [];
+  const rows: string[] = [];
 
   const addRow = (desc: string, debit: number, credit: number) => {
       if (format === "SAGE") {

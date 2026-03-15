@@ -62,7 +62,6 @@ export async function POST(request: Request) {
     if (mappingJson) mapping = JSON.parse(mappingJson);
 
     // 4. Stream Parsing (Keep in request cycle to validate format quickly)
-    // @ts-ignore
     const nodeStream = Readable.fromWeb(file.stream());
     const rawRecords: RawPayrollRecord[] = [];
     

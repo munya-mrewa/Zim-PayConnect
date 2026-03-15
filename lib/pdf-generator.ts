@@ -11,7 +11,7 @@ type FullRecord = RawPayrollRecord & { taxResult: TaxResult };
 export async function generatePayslipPDF(record: FullRecord, orgName: string, logoUrl?: string | null, removeBranding: boolean = false): Promise<ArrayBuffer> {
   const doc = new jsPDF();
   
-  let yOffset = 20;
+  const yOffset = 20;
 
   // Add Logo if available
   if (logoUrl) {
