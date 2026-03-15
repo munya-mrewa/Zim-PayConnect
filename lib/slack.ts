@@ -16,8 +16,6 @@ export async function sendSlackFeedback({
     return { success: false, error: "Slack integration not configured" };
   }
 
-  console.log(`Sending Slack feedback to webhook: ${webhookUrl.substring(0, 30)}...`);
-
   const payload = {
     text: `New Feedback from Zim-PayConnect`,
     blocks: [
@@ -54,6 +52,9 @@ export async function sendSlackFeedback({
       },
     ],
   };
+
+  console.log(`Sending Slack feedback to webhook: ${webhookUrl.substring(0, 30)}...`);
+  console.log(`Payload: ${JSON.stringify(payload, null, 2)}`);
 
   try {
     const response = await fetch(webhookUrl, {
