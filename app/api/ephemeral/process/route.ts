@@ -8,7 +8,7 @@ import { checkProcessingAccess } from "@/lib/auth/subscription";
 import { SUBSCRIPTION_PLANS, SubscriptionPlanId } from "@/lib/config/pricing";
 import { Readable } from "stream";
 import { logger } from "@/lib/logger";
-import { payrollQueue } from "@/lib/queue/worker";
+import { payrollQueue } from "@/lib/queue/client";
 
 // Vercel config to allow longer execution for file uploads
 export const maxDuration = 300; 

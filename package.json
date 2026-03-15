@@ -16,6 +16,8 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@bull-board/api": "^6.20.5",
+    "@bull-board/ui": "^6.20.5",
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^5.10.0",

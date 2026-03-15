@@ -7,6 +7,9 @@ import { settingsSchema, SettingsValues, taxSettingsSchema, TaxSettingsValues, p
 import { revalidatePath } from "next/cache";
 import { compare, hash } from "bcryptjs";
 
+import { AuditService } from "@/lib/audit-service";
+import { headers } from "next/headers";
+
 export async function updateOrganization(data: SettingsValues) {
   try {
     const session = await getServerSession(authOptions);
@@ -22,27 +25,19 @@ export async function updateOrganization(data: SettingsValues) {
     }
 
     const { name, tin, contactEmail, address } = validatedFields.data;
+    const ip = headers().get("x-client-ip") || "unknown";
 
-    await db.organization.update({
-      where: { id: session.user.organizationId },
-      data: {
+    await AuditService.updateOrganization(
+      session.user.id,
+      session.user.organizationId,
+      {
         name,
         tin,
         contactEmail,
         address,
       },
-    });
-
-    // Also update Audit Log
-    await db.auditLog.create({
-        data: {
-            organizationId: session.user.organizationId,
-            userId: session.user.id,
-            action: "UPDATE_SETTINGS",
-            status: "SUCCESS",
-            metadata: { changes: { name, tin } } // Pass object directly for Postgres
-        }
-    });
+      ip
+    );
 
     revalidatePath("/settings");
     return { success: "Organization profile updated." };
@@ -73,9 +68,12 @@ export async function updateTaxSettings(data: TaxSettingsValues) {
         autoUpdateRates, currentExchangeRate
     } = validatedFields.data;
 
-    await db.organization.update({
-      where: { id: session.user.organizationId },
-      data: {
+    const ip = headers().get("x-client-ip") || "unknown";
+
+    await AuditService.updateOrganization(
+      session.user.id,
+      session.user.organizationId,
+      {
         defaultCurrency,
         nssaEnabled,
         nssaRate,
@@ -88,17 +86,8 @@ export async function updateTaxSettings(data: TaxSettingsValues) {
         autoUpdateRates: autoUpdateRates ?? false,
         currentExchangeRate: currentExchangeRate ? Number(currentExchangeRate) : undefined
       },
-    });
-
-    await db.auditLog.create({
-        data: {
-            organizationId: session.user.organizationId,
-            userId: session.user.id,
-            action: "UPDATE_SETTINGS",
-            status: "SUCCESS",
-            metadata: { type: "TAX_CONFIG_CHANGE" }
-        }
-    });
+      ip
+    );
 
     revalidatePath("/settings");
     return { success: "Tax configuration updated." };

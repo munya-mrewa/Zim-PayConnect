@@ -1,4 +1,4 @@
-import { cronQueue } from "./worker";
+import { cronQueue } from "./client";
 import { logger } from "@/lib/logger";
 
 export async function initCronJobs() {

@@ -5,6 +5,7 @@ import { getPlanById } from "@/lib/config/pricing";
 import { logger } from "@/lib/logger";
 import { sendEmail } from "@/lib/email";
 import { getPostHog } from "@/lib/posthog-node";
+import { sendSlackAlert } from "@/lib/notifications";
 
 export async function POST(req: Request) {
   try {
@@ -194,6 +195,12 @@ export async function POST(req: Request) {
           description,
         }
       });
+
+      // Alert Revenue
+      await sendSlackAlert(
+        `💰 **Payment Received**\nAmount: (Check Dashboard)\nRef: ${reference}\nItem: ${description}\nOrg: ${orgId}`,
+        "SUCCESS"
+      );
 
       // Send Invoice/Receipt Email
       if (org.contactEmail) {

@@ -1,5 +1,4 @@
-import { Queue, Worker, Job } from "bullmq";
-import IORedis from "ioredis";
+import { Worker, Job } from "bullmq";
 import { logger } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { checkExpiringSubscriptions } from "@/lib/cron/subscription-reminder";
@@ -7,15 +6,10 @@ import { calculateTax } from "@/lib/ephemeral-engine/calculator";
 import { generateBatchZip } from "@/lib/pdf-generator";
 import { saveZip } from "@/lib/storage/zip-store";
 import { RawPayrollRecord, TaxConfig } from "@/lib/ephemeral-engine/types";
+import { connection } from "./client";
+import { getPostHog } from "@/lib/posthog-node";
 
-const connection = new IORedis(process.env.REDIS_URL || "redis://localhost:6379", { 
-  maxRetriesPerRequest: null,
-  // Ensure we don't hang on connection issues
-  connectTimeout: 10000 
-});
-
-export const cronQueue = new Queue("cron-jobs", { connection });
-export const payrollQueue = new Queue("payroll-processing", { connection });
+export { cronQueue, payrollQueue } from "./client";
 
 interface ProcessingJobData {
     records: RawPayrollRecord[];
@@ -30,8 +24,6 @@ interface ProcessingJobData {
     removeBranding: boolean;
     metadata?: any;
 }
-
-import { getPostHog } from "@/lib/posthog-node";
 
 // Main Payroll Worker
 export const payrollWorker = new Worker(
@@ -118,6 +110,11 @@ export const payrollWorker = new Worker(
                 metadata: { error: error.message }
             }
         });
+
+        await sendSlackAlert(
+            `🚨 **Worker Failure**\nJob: ${job.id}\nOrg: ${orgInfo.name}\nError: ${error.message}`,
+            "ERROR"
+        );
         
         throw error;
     }
