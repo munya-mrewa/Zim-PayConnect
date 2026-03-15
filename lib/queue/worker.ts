@@ -28,6 +28,7 @@ interface ProcessingJobData {
     };
     auditId: string;
     removeBranding: boolean;
+    metadata?: any;
 }
 
 import { getPostHog } from "@/lib/posthog-node";

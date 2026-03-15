@@ -15,6 +15,14 @@ test.describe('Critical Flow: Register -> Upload -> Download', () => {
     await page.getByLabel('Password').fill(testPassword);
     await page.getByRole('button', { name: 'Register' }).click();
 
+    // Check for error message if redirect doesn't happen immediately
+    const errorAlert = page.locator('.bg-red-100');
+    if (await errorAlert.isVisible()) {
+        const errorText = await errorAlert.innerText();
+        console.error(`Registration failed with error: ${errorText}`);
+        throw new Error(`Registration failed: ${errorText}`);
+    }
+
     // Wait for redirect to login page
     await expect(page).toHaveURL(/.*\/login/);
 

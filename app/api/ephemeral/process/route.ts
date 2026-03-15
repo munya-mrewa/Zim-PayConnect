@@ -148,7 +148,13 @@ export async function POST(request: Request) {
             logoUrl: isWhiteLabeled ? org.logoUrl : null
         },
         auditId: auditLog.id,
-        removeBranding: isWhiteLabeled
+        removeBranding: isWhiteLabeled,
+        metadata: {
+            startTime: new Date().toISOString(),
+            requestStart: startTime,
+            method: access.method,
+            exchangeRateUsed: currentRate
+        }
     });
 
     // 9. Deduct Credits if applicable

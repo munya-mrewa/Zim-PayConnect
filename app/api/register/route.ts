@@ -13,7 +13,11 @@ const userSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const bodyText = await req.text();
+    if (!bodyText) {
+        return NextResponse.json({ message: "Empty request body" }, { status: 400 });
+    }
+    const body = JSON.parse(bodyText);
     const { email, name, password, orgName, plan } = userSchema.parse(body);
 
     // check if email already exists
@@ -67,16 +71,6 @@ export async function POST(req: Request) {
         );
     }
     console.error("Registration error:", error);
-    // Write error to file for debugging
-    try {
-      const fs = require('fs');
-      const path = require('path');
-      const logPath = path.join(process.cwd(), 'registration-error.log');
-      const errorMessage = error instanceof Error ? error.stack || error.message : String(error);
-      fs.appendFileSync(logPath, `[${new Date().toISOString()}] ${errorMessage}\n`);
-    } catch (logError) {
-      console.error("Failed to write error log:", logError);
-    }
 
     return NextResponse.json(
       { message: `Something went wrong: ${error instanceof Error ? error.message : String(error)}` },
