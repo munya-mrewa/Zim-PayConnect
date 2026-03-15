@@ -12,7 +12,7 @@ import { GLFormat } from "@/lib/ephemeral-engine/gl-exporter";
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState<"idle" | "uploading" | "processing" | "success" | "error" | "mapping">("idle");
+  const [status, setStatus] = useState<"idle" | "uploading" | "processing" | "success" | "error" | "mapping" | "limit_reached">("idle");
   const [result, setResult] = useState<any>(null);
   const [generating, setGenerating] = useState(false);
   const [processingMonth, setProcessingMonth] = useState<number>(new Date().getMonth() + 1);
@@ -129,6 +129,18 @@ export default function UploadPage() {
          } catch(e) {
              setStatus("error");
          }
+      } else if (xhr.status === 403) {
+          try {
+             const data = JSON.parse(xhr.responseText);
+             if (data.code === "NO_CREDITS") {
+                 setStatus("limit_reached");
+             } else {
+                 setErrorMessage(data.error || "Permission denied.");
+                 setStatus("error");
+             }
+          } catch(e) {
+             setStatus("error");
+          }
       } else {
          try {
              const data = JSON.parse(xhr.responseText);
@@ -367,6 +379,36 @@ export default function UploadPage() {
                  <CardContent>
                     <p className="text-sm text-red-800">{errorMessage}</p>
                     <Button variant="outline" onClick={() => setStatus("idle")} className="w-full mt-4">Try Again</Button>
+                 </CardContent>
+              </Card>
+           )}
+
+           {status === "limit_reached" && (
+              <Card className="border-orange-200 bg-orange-50">
+                 <CardHeader className="flex flex-row items-center gap-2 pb-2">
+                    <AlertCircle className="h-5 w-5 text-orange-600" />
+                    <CardTitle className="text-lg font-medium">Limit Reached</CardTitle>
+                 </CardHeader>
+                 <CardContent>
+                    <p className="text-sm text-orange-800 mb-4">
+                        You have reached the limit of your current plan or have no processing credits left.
+                    </p>
+                    <div className="flex gap-2">
+                        <Button 
+                            variant="default" 
+                            className="w-full bg-orange-600 hover:bg-orange-700" 
+                            onClick={() => window.location.href = '/upgrade'}
+                        >
+                            Upgrade Plan
+                        </Button>
+                        <Button 
+                            variant="outline" 
+                            className="w-full border-orange-200 hover:bg-orange-100 text-orange-800" 
+                            onClick={() => window.location.href = '/settings'}
+                        >
+                            Buy Credits
+                        </Button>
+                    </div>
                  </CardContent>
               </Card>
            )}

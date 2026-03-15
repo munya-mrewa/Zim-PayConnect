@@ -8,5 +8,6 @@ export default defineConfig({
     environment: 'node',
     pool: 'forks',
     maxConcurrency: 1,
+    exclude: ['**/e2e/**', '**/node_modules/**'],
   },
 })
