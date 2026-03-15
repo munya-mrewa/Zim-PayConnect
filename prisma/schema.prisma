@@ -19,6 +19,7 @@ model User {
   hashedPassword String?
   fullName       String?
   role           UserRole      @default(ADMIN)
+  isActive       Boolean       @default(true)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   

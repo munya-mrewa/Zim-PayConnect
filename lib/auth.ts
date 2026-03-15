@@ -44,6 +44,11 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        // Check if user is active
+        if (user.isActive === false) {
+            throw new Error("Your account has been deactivated. Please contact support.");
+        }
+
         // 2FA Check
         if (user.twoFactorEnabled) {
           if (credentials.code) {

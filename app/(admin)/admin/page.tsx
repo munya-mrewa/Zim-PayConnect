@@ -55,7 +55,9 @@ export default async function AdminPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{userCount}</div>
-            <p className="text-xs text-muted-foreground">Across all organizations</p>
+            <Link href="/admin/users" className="text-xs text-primary hover:underline font-medium">
+              Manage all users →
+            </Link>
           </CardContent>
         </Card>
         <Card>
