@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Calendar, CreditCard, User } from "lucide-react";
+import { OrgActionsClient } from "./org-actions-client";
 
 export default async function SubscriptionsPage() {
   const organizations = await db.organization.findMany({
@@ -69,6 +70,7 @@ export default async function SubscriptionsPage() {
               <TableHead>Users</TableHead>
               <TableHead>Credits</TableHead>
               <TableHead>Trial/Ends At</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -106,6 +108,12 @@ export default async function SubscriptionsPage() {
                         </span>
                     )}
                   </div>
+                </TableCell>
+                <TableCell className="text-right">
+                    <OrgActionsClient 
+                        orgId={org.id} 
+                        orgName={org.name} 
+                    />
                 </TableCell>
               </TableRow>
             ))}

@@ -89,3 +89,30 @@ export async function deleteUser(userId: string) {
     return { success: false, error: "Failed to delete user" };
   }
 }
+
+export async function deleteOrganization(orgId: string) {
+  const session = await getServerSession(authOptions);
+  
+  if (!session || session.user.role !== "ADMIN") {
+    throw new Error("Unauthorized");
+  }
+
+  try {
+    // Delete associated records first (Prisma cascades should handle most, but we'll be safe)
+    await db.$transaction([
+        db.auditLog.deleteMany({ where: { organizationId: orgId } }),
+        db.apiKey.deleteMany({ where: { organizationId: orgId } }),
+        db.webhookEndpoint.deleteMany({ where: { organizationId: orgId } }),
+        db.client.deleteMany({ where: { organizationId: orgId } }),
+        db.user.deleteMany({ where: { organizationId: orgId } }),
+        db.organization.delete({ where: { id: orgId } })
+    ]);
+    
+    revalidatePath("/admin/subscriptions");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete organization:", error);
+    return { success: false, error: "Failed to delete organization and its data" };
+  }
+}
