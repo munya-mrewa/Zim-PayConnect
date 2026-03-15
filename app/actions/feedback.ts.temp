@@ -1,0 +1,18 @@
+"use client";
+
+import { sendSlackFeedback } from "@/lib/slack";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+
+export async function submitFeedbackAction(formData: FormData) {
+  const message = formData.get("message") as string;
+  const url = formData.get("url") as string;
+
+  if (!message) {
+      return { success: false, error: "Message is required" };
+  }
+
+  // Get user details in action for security
+  // Wait, getServerSession is for server-side. 
+  // Since this is a server action, I need to make it a server file.
+}

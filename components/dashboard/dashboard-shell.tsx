@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
+import { FeedbackDrawer } from "./feedback-drawer";
 
 export type SubscriptionStatus = {
   status: 'TRIAL' | 'ACTIVE' | 'EXPIRED' | 'PAST_DUE' | 'CANCELLED';
@@ -245,6 +246,7 @@ export function DashboardShell({
           {children}
         </main>
       </div>
+      <FeedbackDrawer />
     </div>
   );
 }
