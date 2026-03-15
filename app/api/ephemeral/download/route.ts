@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getZip } from "@/lib/storage/zip-store";
 import { logger } from "@/lib/logger";
+import { checkSubscriptionAccess } from "@/lib/auth/subscription";
 
 export async function GET(req: Request) {
     try {
@@ -12,6 +13,13 @@ export async function GET(req: Request) {
         }
 
         const orgId = session.user.organizationId;
+
+        // Enforcement: Ensure subscription is still active to download
+        const hasAccess = await checkSubscriptionAccess(orgId);
+        if (!hasAccess) {
+             return new NextResponse("Subscription expired. Please upgrade to download reports.", { status: 403 });
+        }
+
         const { searchParams } = new URL(req.url);
         const fileId = searchParams.get("fileId");
 

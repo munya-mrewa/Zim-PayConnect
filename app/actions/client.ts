@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { SUBSCRIPTION_PLANS, SubscriptionPlanId } from "@/lib/config/pricing";
+import { requireActiveSubscription } from "@/lib/auth/subscription";
 
 export type ClientData = {
   id?: string;
@@ -30,6 +31,9 @@ async function getOrganization() {
   if (!user?.organization) {
     throw new Error("Organization not found");
   }
+
+  // Robust check for expired trial/subscription
+  await requireActiveSubscription(user.organization.id);
 
   return user.organization;
 }

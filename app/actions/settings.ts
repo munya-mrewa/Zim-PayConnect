@@ -9,6 +9,7 @@ import { compare, hash } from "bcryptjs";
 
 import { AuditService } from "@/lib/audit-service";
 import { headers } from "next/headers";
+import { requireActiveSubscription } from "@/lib/auth/subscription";
 
 export async function updateOrganization(data: SettingsValues) {
   try {
@@ -17,6 +18,9 @@ export async function updateOrganization(data: SettingsValues) {
     if (!session?.user?.id || !session?.user?.organizationId) {
       return { error: "Unauthorized" };
     }
+
+    // Enforcement
+    await requireActiveSubscription(session.user.organizationId);
 
     const validatedFields = settingsSchema.safeParse(data);
 
@@ -56,6 +60,9 @@ export async function updateTaxSettings(data: TaxSettingsValues) {
     if (!session?.user?.id || !session?.user?.organizationId) {
       return { error: "Unauthorized" };
     }
+
+    // Enforcement
+    await requireActiveSubscription(session.user.organizationId);
 
     const validatedFields = taxSettingsSchema.safeParse(data);
 

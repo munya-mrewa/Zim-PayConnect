@@ -58,3 +58,23 @@ export async function checkProcessingAccess(orgId: string): Promise<{ authorized
 
     return { authorized: false, method: null };
 }
+
+/**
+ * Helper for Server Actions to ensure the user has an active trial or subscription.
+ * Throws an error if unauthorized to prevent action execution.
+ */
+export async function requireActiveSubscription(orgId: string) {
+    const isAuthorized = await checkSubscriptionAccess(orgId);
+    
+    if (!isAuthorized) {
+        // Check if they have credits at least
+        const org = await db.organization.findUnique({
+            where: { id: orgId },
+            select: { credits: true }
+        });
+
+        if (!org || org.credits <= 0) {
+            throw new Error("SUBSCRIPTION_EXPIRED");
+        }
+    }
+}
