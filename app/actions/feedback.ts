@@ -14,9 +14,13 @@ export async function submitFeedbackAction(formData: FormData) {
 
   const session = await getServerSession(authOptions);
 
+  console.log(`Feedback Action - Session Found: ${!!session}, User: ${session?.user?.email}`);
+
   if (!session?.user) {
     return { success: false, error: "Unauthorized" };
   }
+
+  console.log(`Submitting feedback for ${session.user.email} from ${url}`);
 
   const result = await sendSlackFeedback({
     message,

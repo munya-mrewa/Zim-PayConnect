@@ -12,9 +12,11 @@ export async function sendSlackFeedback({
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
 
   if (!webhookUrl) {
-    console.error("SLACK_WEBHOOK_URL is not defined in environment variables.");
+    console.error("SLACK_WEBHOOK_URL is not defined in environment variables. Current env:", Object.keys(process.env).filter(k => k.includes('SLACK')));
     return { success: false, error: "Slack integration not configured" };
   }
+
+  console.log(`Sending Slack feedback to webhook: ${webhookUrl.substring(0, 30)}...`);
 
   const payload = {
     text: `New Feedback from Zim-PayConnect`,
@@ -61,6 +63,8 @@ export async function sendSlackFeedback({
       },
       body: JSON.stringify(payload),
     });
+
+    console.log(`Slack response: ${response.status} ${response.statusText}`);
 
     if (!response.ok) {
       const errorText = await response.text();
