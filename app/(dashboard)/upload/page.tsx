@@ -4,7 +4,7 @@ import { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2, Download, Table, HelpCircle, XCircle, RefreshCw } from "lucide-react";
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, Download, Table, HelpCircle, XCircle, RefreshCw, ShieldCheck, ExternalLink } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { saveAs } from "file-saver";
 import { ColumnMapping } from "@/lib/ephemeral-engine/types";
@@ -336,10 +336,23 @@ export default function UploadPage() {
               ) : null}
 
            </CardContent>
-           <CardFooter className="flex-col items-start gap-2 border-t bg-muted/20 p-6">
-              <p className="text-xs text-muted-foreground">
-                 Ephemeral Mode: No employee data is saved. ZIPs are encrypted and deleted after 24h.
+           <CardFooter className="flex-col items-start gap-4 border-t bg-muted/20 p-6">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                 <ShieldCheck className="h-4 w-4 text-blue-500" />
+                 <span className="font-semibold text-zinc-300">Ephemeral Compliance Mode</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                 Your data is processed in isolated memory. No employee names or salaries are stored in our persistent database. 
+                 ZIP outputs are encrypted and purged after 24 hours.
               </p>
+              <a 
+                href="/security" 
+                target="_blank"
+                className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-medium transition-colors"
+              >
+                View Security & Privacy Whitepaper
+                <ExternalLink className="h-3 w-3" />
+              </a>
            </CardFooter>
         </Card>
         )}

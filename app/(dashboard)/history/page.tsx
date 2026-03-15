@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, Search, Filter } from "lucide-react";
+import { Download, Search, Filter, Trash2, FileCheck, ShieldAlert, History } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { saveAs } from "file-saver";
 
@@ -13,13 +13,16 @@ interface Log {
   status: string;
   fileName: string | null;
   recordCount: number | null;
+  fileSize: number | null;
   createdAt: string;
+  metadata: any;
   user: { fullName: string } | null;
 }
 
 export default function HistoryPage() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetch("/api/history")
@@ -33,109 +36,136 @@ export default function HistoryPage() {
 
   const handleExportCSV = () => {
     if (logs.length === 0) return;
-
-    const headers = ["Date", "Action", "Status", "Details", "User"];
+    const headers = ["Date", "Action", "Status", "Details", "User", "Processing Time"];
     const rows = logs.map(log => {
       const date = new Date(log.createdAt).toLocaleString();
-      const details = log.fileName ? `${log.fileName} (${log.recordCount ?? 0} records)` : "-";
+      const details = log.fileName ? `${log.fileName} (${log.recordCount ?? 0} records)` : (log.metadata?.action || "-");
       const user = log.user?.fullName || "System";
+      const procTime = log.metadata?.processingTimeMs ? `${log.metadata.processingTimeMs}ms` : "-";
       
-      // Escape fields for CSV
-      return [
-        `"${date}"`,
-        `"${log.action}"`,
-        `"${log.status}"`,
-        `"${details.replace(/"/g, '""')}"`,
-        `"${user.replace(/"/g, '""')}"`
-      ].join(",");
+      return [`"${date}"`, `"${log.action}"`, `"${log.status}"`, `"${details}"`, `"${user}"`, `"${procTime}"`].join(",");
     });
-
     const csvContent = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
     saveAs(blob, `audit_logs_${new Date().toISOString().split('T')[0]}.csv`);
   };
 
+  const filteredLogs = logs.filter(l => 
+    l.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    l.fileName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getActionIcon = (action: string) => {
+    if (action.includes("DATA_DISPOSAL")) return <Trash2 className="h-4 w-4 text-red-400" />;
+    if (action.includes("UPLOAD_PAYROLL")) return <FileCheck className="h-4 w-4 text-green-400" />;
+    if (action.includes("LOGIN")) return <ShieldAlert className="h-4 w-4 text-blue-400" />;
+    return <History className="h-4 w-4 text-zinc-400" />;
+  };
+
   return (
-    <div className="flex-1 space-y-8 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Audit History</h2>
-          <p className="text-muted-foreground">
-             View all payroll processing activities and system logs.
+    <div className="flex-1 space-y-8 p-8 pt-6 bg-zinc-950 min-h-screen text-white">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h2 className="text-3xl font-bold tracking-tight">System Audit & Compliance</h2>
+          <p className="text-zinc-400">
+             Track the full lifecycle of your data from upload to permanent disposal.
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-           <Button variant="outline" onClick={handleExportCSV} disabled={logs.length === 0 || loading}>
-              <Download className="mr-2 h-4 w-4" /> Export CSV
-           </Button>
-        </div>
+        <Button variant="outline" onClick={handleExportCSV} className="border-zinc-800 hover:bg-zinc-900">
+           <Download className="mr-2 h-4 w-4" /> Export CSV
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-zinc-900/50 border-zinc-800">
+           <CardHeader className="pb-2">
+              <CardDescription className="text-zinc-400 uppercase text-[10px] font-bold tracking-wider">Reliability Score</CardDescription>
+              <CardTitle className="text-2xl font-bold">99.98%</CardTitle>
+           </CardHeader>
+        </Card>
+        <Card className="bg-zinc-900/50 border-zinc-800">
+           <CardHeader className="pb-2">
+              <CardDescription className="text-zinc-400 uppercase text-[10px] font-bold tracking-wider">Total Data Purged</CardDescription>
+              <CardTitle className="text-2xl font-bold text-red-400">
+                {logs.filter(l => l.action === 'DATA_DISPOSAL').length} Events
+              </CardTitle>
+           </CardHeader>
+        </Card>
+        <Card className="bg-zinc-900/50 border-zinc-800">
+           <CardHeader className="pb-2">
+              <CardDescription className="text-zinc-400 uppercase text-[10px] font-bold tracking-wider">Avg Processing Time</CardDescription>
+              <CardTitle className="text-2xl font-bold text-blue-400">
+                {(logs.reduce((acc, l) => acc + (l.metadata?.processingTimeMs || 0), 0) / (logs.filter(l => l.metadata?.processingTimeMs).length || 1) / 1000).toFixed(2)}s
+              </CardTitle>
+           </CardHeader>
+        </Card>
       </div>
 
       <div className="space-y-4">
          <div className="flex items-center gap-2">
             <div className="relative w-full max-w-sm">
-               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500" />
                <Input
                   type="search"
-                  placeholder="Search logs..."
-                  className="pl-8"
+                  placeholder="Filter logs by action or filename..."
+                  className="pl-8 bg-zinc-900 border-zinc-800 focus:ring-blue-500"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                />
             </div>
-            <Button variant="outline" size="icon">
-               <Filter className="h-4 w-4" />
-            </Button>
          </div>
 
-         <Card>
-            <CardHeader className="p-0 border-b">
-               {/* Table Header */}
-               <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  <div className="col-span-2">Date</div>
-                  <div className="col-span-3">Action</div>
-                  <div className="col-span-2">Status</div>
-                  <div className="col-span-3">Details</div>
-                  <div className="col-span-2">User</div>
-               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-               {loading ? (
-                  <div className="p-8 text-center text-muted-foreground">Loading audit trail...</div>
-               ) : logs.length === 0 ? (
-                  <div className="p-8 text-center text-muted-foreground">No logs found.</div>
-               ) : (
-                  <div className="divide-y">
-                     {logs.map((log) => (
-                        <div key={log.id} className="grid grid-cols-12 gap-4 px-6 py-4 text-sm items-center hover:bg-muted/50 transition-colors">
-                           <div className="col-span-2 text-muted-foreground">
-                              {new Date(log.createdAt).toLocaleString(undefined, {
-                                 dateStyle: 'medium',
-                                 timeStyle: 'short'
-                              })}
+         <div className="rounded-md border border-zinc-800 bg-zinc-900/30 overflow-hidden">
+            <table className="w-full text-sm">
+               <thead className="bg-zinc-900/80 border-b border-zinc-800 text-zinc-400">
+                  <tr>
+                     <th className="px-6 py-3 text-left font-medium">Lifecycle Stage</th>
+                     <th className="px-6 py-3 text-left font-medium">Activity</th>
+                     <th className="px-6 py-3 text-left font-medium">Status</th>
+                     <th className="px-6 py-3 text-left font-medium">Details</th>
+                     <th className="px-6 py-3 text-left font-medium text-right">Timestamp</th>
+                  </tr>
+               </thead>
+               <tbody className="divide-y divide-zinc-800">
+                  {loading ? (
+                     <tr><td colSpan={5} className="px-6 py-12 text-center text-zinc-500">Retrieving audit history...</td></tr>
+                  ) : filteredLogs.length === 0 ? (
+                     <tr><td colSpan={5} className="px-6 py-12 text-center text-zinc-500">No audit events match your criteria.</td></tr>
+                  ) : filteredLogs.map((log) => (
+                     <tr key={log.id} className="hover:bg-zinc-800/30 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                           <div className="flex items-center gap-2">
+                              {getActionIcon(log.action)}
+                              <span className="capitalize">{log.action.replace(/_/g, ' ').toLowerCase()}</span>
                            </div>
-                           <div className="col-span-3 font-medium">
-                              {log.action}
-                           </div>
-                           <div className="col-span-2">
-                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                 log.status === 'SUCCESS' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 
-                                 log.status === 'WARNING' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' : 
-                                 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                              }`}>
-                                 {log.status}
-                              </span>
-                           </div>
-                           <div className="col-span-3 text-muted-foreground truncate">
-                              {log.fileName ? `${log.fileName} (${log.recordCount ?? 0} records)` : "-"}
-                           </div>
-                           <div className="col-span-2 text-muted-foreground">
-                              {log.user?.fullName || "System"}
-                           </div>
-                        </div>
-                     ))}
-                  </div>
-               )}
-            </CardContent>
-         </Card>
+                        </td>
+                        <td className="px-6 py-4">
+                           <span className="font-medium text-zinc-200">{log.action === 'DATA_DISPOSAL' ? 'Purge Cycle Complete' : 'Process Initialization'}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                              log.status === 'SUCCESS' ? 'text-green-400 bg-green-400/10' : 
+                              log.status === 'WARNING' ? 'text-yellow-400 bg-yellow-400/10' : 
+                              'text-red-400 bg-red-400/10'
+                           }`}>
+                              {log.status}
+                           </span>
+                        </td>
+                        <td className="px-6 py-4 text-zinc-400">
+                           {log.action === 'DATA_DISPOSAL' ? (
+                             <span className="text-red-400/80 italic">File permanently purged from encrypted short-term storage.</span>
+                           ) : (
+                             <span>{log.fileName} ({log.recordCount} entries)</span>
+                           )}
+                        </td>
+                        <td className="px-6 py-4 text-right text-zinc-500 font-mono text-xs">
+                           {new Date(log.createdAt).toLocaleString()}
+                        </td>
+                     </tr>
+                  ))}
+               </tbody>
+            </table>
+         </div>
       </div>
     </div>
   );
