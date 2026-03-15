@@ -27,7 +27,6 @@ export function FeedbackDrawer() {
 
     try {
       const result = await submitFeedbackAction(formData);
-      console.log("Feedback result:", result);
       
       if (result.success) {
         setStatus("success");
@@ -39,12 +38,9 @@ export function FeedbackDrawer() {
         }, 2000);
       } else {
         setStatus("error");
-        alert("Error from server: " + (result.error || "Unknown error"));
       }
     } catch (err) {
-      console.error("Feedback submit error:", err);
       setStatus("error");
-      alert("Client-side error: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setIsSubmitting(false);
     }

@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 export async function sendSlackFeedback({
   message,
   name,
@@ -12,7 +14,7 @@ export async function sendSlackFeedback({
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
 
   if (!webhookUrl) {
-    console.error("SLACK_WEBHOOK_URL is not defined in environment variables. Current env:", Object.keys(process.env).filter(k => k.includes('SLACK')));
+    logger.error("SLACK_WEBHOOK_URL is not defined in environment variables.");
     return { success: false, error: "Slack integration not configured" };
   }
 
@@ -53,9 +55,6 @@ export async function sendSlackFeedback({
     ],
   };
 
-  console.log(`Sending Slack feedback to webhook: ${webhookUrl.substring(0, 30)}...`);
-  console.log(`Payload: ${JSON.stringify(payload, null, 2)}`);
-
   try {
     const response = await fetch(webhookUrl, {
       method: "POST",
@@ -65,16 +64,15 @@ export async function sendSlackFeedback({
       body: JSON.stringify(payload),
     });
 
-    console.log(`Slack response: ${response.status} ${response.statusText}`);
-
     if (!response.ok) {
       const errorText = await response.text();
+      logger.error({ status: response.status, errorText }, "Slack API error");
       throw new Error(`Slack API error: ${response.status} ${errorText}`);
     }
 
     return { success: true };
   } catch (error) {
-    console.error("Error sending feedback to Slack:", error);
+    logger.error({ err: error }, "Error sending feedback to Slack");
     return { success: false, error: "Failed to send feedback" };
   }
 }

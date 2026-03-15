@@ -3,6 +3,7 @@
 import { sendSlackFeedback } from "@/lib/slack";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 export async function submitFeedbackAction(formData: FormData) {
   const message = formData.get("message") as string;
@@ -14,13 +15,12 @@ export async function submitFeedbackAction(formData: FormData) {
 
   const session = await getServerSession(authOptions);
 
-  console.log(`Feedback Action - Session Found: ${!!session}, User: ${session?.user?.email}`);
-
   if (!session?.user) {
+    logger.warn({ url }, "Unauthorized feedback attempt");
     return { success: false, error: "Unauthorized" };
   }
 
-  console.log(`Submitting feedback for ${session.user.email} from ${url}`);
+  logger.info({ user: session.user.email, url }, "Submitting user feedback");
 
   const result = await sendSlackFeedback({
     message,
