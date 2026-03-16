@@ -8,6 +8,10 @@ export function SiteFooter() {
           <p className="text-center text-sm leading-loose text-zinc-500 md:text-left">
             © 2026 Zim-PayConnect. All rights reserved.
           </p>
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/5 px-3 py-1 text-[11px] text-emerald-300 self-center md:self-start">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            <span>Zero-Data Architecture — we never store your payroll data.</span>
+          </div>
           <p className="text-center text-sm text-zinc-500 md:text-left">
             Contact: <a href="mailto:munya.mrewa@vextraldigital.com" className="hover:text-white transition-colors">munya.mrewa@vextraldigital.com</a>
           </p>

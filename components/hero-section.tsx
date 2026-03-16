@@ -74,9 +74,20 @@ export function HeroSection() {
             ref={subtitleRef}
             className="mx-auto max-w-[800px] text-zinc-400 md:text-xl lg:text-2xl font-light tracking-wide leading-relaxed opacity-0"
           >
-            Compliant with ZIMRA TaRMS 2025-2026. <br className="hidden md:block" />
-            Processed in memory. Vanishes without a trace.
+            Run ZIMRA TaRMS 2025–2026 compliant payroll in minutes for Zimbabwean finance and HR teams — without ever storing employee data.
           </p>
+
+          <div className="mt-2 flex flex-col items-center gap-2 text-xs sm:text-sm text-zinc-400">
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/5 px-3 py-1">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+              <span className="font-medium text-emerald-300">
+                Security: Zero Data Storage
+              </span>
+            </div>
+            <p className="text-center text-[11px] sm:text-xs text-zinc-500">
+              Trusted by early adopters in Zimbabwean payroll teams testing TaRMS 2025–2026 workflows.
+            </p>
+          </div>
 
           <div ref={buttonsRef} className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8 opacity-0">
             <Button 
