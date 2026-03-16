@@ -107,7 +107,7 @@ export function SiteHeader() {
 
       {/* Mobile Menu Overlay */}
       {isOpen && (
-        <div className="md:hidden fixed inset-0 top-16 z-50 bg-black/95 backdrop-blur-xl border-t border-white/10 p-6 animate-in slide-in-from-top-5 fade-in-20">
+        <div className="md:hidden fixed inset-0 top-16 z-50 bg-black border-t border-white/10 p-6 animate-in slide-in-from-top-5 fade-in-20">
           <nav className="flex flex-col space-y-6">
             <Link
               href="/#features"
