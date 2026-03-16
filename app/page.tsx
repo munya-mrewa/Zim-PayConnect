@@ -121,7 +121,7 @@ export default function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <SiteHeader />
-      <main className="flex-1">
+      <main className="flex-1 pt-16 md:pt-20">
         <HeroSection />
         <FeatureSection />
         <PricingSection />
