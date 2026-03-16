@@ -21,7 +21,7 @@ export function SiteHeader() {
   const isLoggedIn = false; 
 
   return (
-    <header className="fixed top-0 z-50 w-full border-b border-white/5 bg-black/50 backdrop-blur-xl">
+    <header className="fixed top-0 z-50 w-full border-b border-white/5 bg-black">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center">
           <Link className="mr-8 flex items-center space-x-2 font-bold text-xl tracking-tight text-white" href="/">
