@@ -79,7 +79,10 @@ export default async function SettingsPage() {
                 necEnabled: user.organization.necEnabled,
                 necRate: user.organization.necRate.toNumber(),
                 sdfEnabled: user.organization.sdfEnabled,
-                sdfRate: user.organization.sdfRate.toNumber()
+                sdfRate: user.organization.sdfRate.toNumber(),
+                autoUpdateRates: user.organization.autoUpdateRates,
+                currentExchangeRate: user.organization.currentExchangeRate.toNumber(),
+                accountingFormat: (user.organization as any).accountingFormat || "STANDARD",
             }}
          />
          

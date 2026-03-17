@@ -22,6 +22,7 @@ export const taxSettingsSchema = z.object({
   // Exchange Rate
   autoUpdateRates: z.boolean().optional(), // Optional to allow backward compatibility if form doesn't send it initially
   currentExchangeRate: z.coerce.number().min(0).optional(),
+  accountingFormat: z.enum(["STANDARD", "SAGE", "QUICKBOOKS", "XERO"]).optional(),
 });
 
 export const passwordChangeSchema = z.object({

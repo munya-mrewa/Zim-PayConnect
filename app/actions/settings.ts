@@ -75,7 +75,8 @@ export async function updateTaxSettings(data: TaxSettingsValues) {
     const { 
         defaultCurrency, nssaEnabled, nssaRate, nssaCeilingUSD, nssaCeilingZiG, 
         necEnabled, necRate, sdfEnabled, sdfRate,
-        autoUpdateRates, currentExchangeRate
+        autoUpdateRates, currentExchangeRate,
+        accountingFormat,
     } = validatedFields.data;
 
     const headerList = await headers();
@@ -95,8 +96,9 @@ export async function updateTaxSettings(data: TaxSettingsValues) {
         sdfEnabled,
         sdfRate,
         autoUpdateRates: autoUpdateRates ?? false,
-        currentExchangeRate: currentExchangeRate ? Number(currentExchangeRate) : undefined
-      },
+        currentExchangeRate: currentExchangeRate ? Number(currentExchangeRate) : undefined,
+        accountingFormat: accountingFormat || "STANDARD",
+      } as any,
       ip
     );
 

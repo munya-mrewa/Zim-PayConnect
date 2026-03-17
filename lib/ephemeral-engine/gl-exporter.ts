@@ -3,7 +3,7 @@ import { sanitizeCsvCell } from "@/lib/utils";
 
 type FullRecord = RawPayrollRecord & { taxResult: TaxResult };
 
-export type GLFormat = "STANDARD" | "SAGE" | "QUICKBOOKS";
+export type GLFormat = "STANDARD" | "SAGE" | "QUICKBOOKS" | "XERO";
 
 export function generateGLCSV(records: FullRecord[], orgName: string, format: GLFormat = "STANDARD"): string {
   // 1. Aggregates
@@ -57,6 +57,9 @@ export function generateGLCSV(records: FullRecord[], orgName: string, format: GL
       } else if (format === "QUICKBOOKS") {
           // Date,RefNumber,Account,Memo,Debit,Credit
           rows.push(`${safeDate},${safeRef},,${safeDesc},${debit.toFixed(2)},${credit.toFixed(2)}`);
+      } else if (format === "XERO") {
+          // Xero: Date,Description,Reference,Account,Debit,Credit,TaxType
+          rows.push(`${safeDate},${safeDesc},${safeRef},,${debit.toFixed(2)},${credit.toFixed(2)},NONE`);
       } else {
           // STANDARD: Date,Reference,Description,Account,Debit,Credit
           rows.push(`${safeDate},${safeRef},${safeDesc},,${debit.toFixed(2)},${credit.toFixed(2)}`);
@@ -67,6 +70,8 @@ export function generateGLCSV(records: FullRecord[], orgName: string, format: GL
       header = `Period,Date,Reference,Description,Account,Debit,Credit,TaxType`;
   } else if (format === "QUICKBOOKS") {
       header = `Date,RefNumber,Account,Memo,Debit,Credit`;
+  } else if (format === "XERO") {
+      header = `Date,Description,Reference,Account,Debit,Credit,TaxType`;
   } else {
       header = `Date,Reference,Description,Account,Debit,Credit`;
   }

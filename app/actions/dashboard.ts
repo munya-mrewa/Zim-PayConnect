@@ -60,3 +60,53 @@ export async function getOnboardingStatus(org: Organization) {
         steps
     };
 }
+
+export async function getPayrollSummary(organizationId: string) {
+  if (!organizationId) {
+    return {
+      headcountThisMonth: 0,
+      grossThisMonth: 0,
+      employerCostThisMonth: 0,
+    };
+  }
+
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const logs = await db.auditLog.findMany({
+    where: {
+      organizationId,
+      action: "UPLOAD_PAYROLL",
+      status: "SUCCESS",
+      createdAt: {
+        gte: startOfMonth,
+      },
+    },
+    select: {
+      recordCount: true,
+      metadata: true,
+    },
+  });
+
+  let headcountThisMonth = 0;
+  let grossThisMonth = 0;
+  let employerCostThisMonth = 0;
+
+  logs.forEach((log) => {
+    headcountThisMonth += log.recordCount || 0;
+    const meta = log.metadata as any;
+    if (meta?.totalGross) {
+      grossThisMonth += Number(meta.totalGross);
+    }
+    if (meta?.totalEmployerCost) {
+      employerCostThisMonth += Number(meta.totalEmployerCost);
+    }
+  });
+
+  return {
+    headcountThisMonth,
+    grossThisMonth,
+    employerCostThisMonth,
+  };
+}

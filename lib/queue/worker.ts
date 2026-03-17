@@ -6,6 +6,7 @@ import { calculateTax } from "@/lib/ephemeral-engine/calculator";
 import { generateBatchZip } from "@/lib/pdf-generator";
 import { saveZip } from "@/lib/storage/zip-store";
 import { RawPayrollRecord, TaxConfig } from "@/lib/ephemeral-engine/types";
+import { GLFormat } from "@/lib/ephemeral-engine/gl-exporter";
 import { connection } from "./client";
 import { getPostHog } from "@/lib/posthog-node";
 import { sendSlackAlert } from "@/lib/notifications";
@@ -26,13 +27,14 @@ interface ProcessingJobData {
     auditId: string;
     removeBranding: boolean;
     metadata?: any;
+    glFormat?: GLFormat;
 }
 
 // Main Payroll Worker
 export const payrollWorker = new Worker(
   "payroll-processing",
   async (job: Job<ProcessingJobData>) => {
-    const { records, taxConfig, orgInfo, auditId, removeBranding } = job.data;
+    const { records, taxConfig, orgInfo, auditId, removeBranding, glFormat } = job.data;
     const posthog = getPostHog();
 
     logger.info({ jobId: job.id, orgId: orgInfo.id, recordCount: records.length }, "Starting background payroll processing");
@@ -54,12 +56,25 @@ export const payrollWorker = new Worker(
             taxResult: calculateTax(record, taxConfig)
         }));
 
+        // Aggregate totals for reporting / dashboard
+        let totalGross = 0;
+        let totalEmployerCost = 0;
+        processedRecords.forEach((r) => {
+          const t = r.taxResult;
+          totalGross += t.grossIncome;
+          const employerNssa = t.nssa;
+          const employerNec = t.nec || 0;
+          const employerSdf = t.sdf || 0;
+          totalEmployerCost += employerNssa + employerNec + employerSdf;
+        });
+
         const zipBlob = await generateBatchZip(
             processedRecords, 
             orgInfo.name, 
             orgInfo.logoUrl, 
             orgInfo.tin, 
-            removeBranding
+            removeBranding,
+            glFormat || "STANDARD"
         );
 
         const arrayBuffer = await zipBlob.arrayBuffer();
@@ -73,7 +88,10 @@ export const payrollWorker = new Worker(
                     ...(typeof job.data === 'object' ? (job.data as any).metadata : {}),
                     fileId,
                     completedAt: new Date().toISOString(),
-                    processingTimeMs: Date.now() - job.timestamp
+                    processingTimeMs: Date.now() - job.timestamp,
+                    totalGross,
+                    totalEmployerCost,
+                    employeeCount: records.length,
                 }
             }
         });

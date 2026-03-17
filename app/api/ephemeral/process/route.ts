@@ -152,8 +152,9 @@ export async function POST(request: Request) {
             startTime: new Date().toISOString(),
             requestStart: startTime,
             method: access.method,
-            exchangeRateUsed: currentRate
-        }
+            exchangeRateUsed: currentRate,
+            accountingFormat: (org as any).accountingFormat || "STANDARD",
+        },
     });
 
     // 9. Deduct Credits if applicable

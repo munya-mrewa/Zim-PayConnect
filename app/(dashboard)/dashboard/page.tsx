@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload, History, Settings, Activity } from "lucide-react";
-import { getVolumeHistory, getOnboardingStatus } from "@/app/actions/dashboard";
+import { getVolumeHistory, getOnboardingStatus, getPayrollSummary } from "@/app/actions/dashboard";
 import { VolumeChart } from "@/components/dashboard/volume-chart";
 import { OnboardingWizard } from "@/components/dashboard/onboarding-wizard";
 import { CreditBalance } from "@/components/dashboard/credit-balance";
@@ -31,9 +31,10 @@ export default async function DashboardPage() {
       redirect("/login"); 
   }
 
-  const [volumeData, onboarding] = await Promise.all([
+  const [volumeData, onboarding, payrollSummary] = await Promise.all([
       getVolumeHistory(org.id),
-      getOnboardingStatus(org)
+      getOnboardingStatus(org),
+      getPayrollSummary(org.id),
   ]);
 
   const totalProcessed = volumeData.reduce((acc: number, curr: any) => acc + curr.count, 0);
@@ -63,6 +64,20 @@ export default async function DashboardPage() {
          <DashboardStats subscriptionTier={org.subscriptionTier} />
          
          <CreditBalance credits={org.credits} />
+         
+         <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">This Month Payroll</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-semibold">
+              Headcount: {payrollSummary.headcountThisMonth}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Gross: USD {payrollSummary.grossThisMonth.toFixed(2)} | Employer Cost: USD {payrollSummary.employerCostThisMonth.toFixed(2)}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">

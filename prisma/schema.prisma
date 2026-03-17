@@ -88,6 +88,9 @@ model Organization {
   currentExchangeRate Decimal   @default(28.0000) @db.Decimal(10, 4)
   lastRateUpdate      DateTime?
 
+  // Accounting Export
+  accountingFormat   String   @default("STANDARD") // STANDARD, SAGE, QUICKBOOKS, XERO
+
   // Subscription Details
   subscriptionTier   String   @default("MICRO") // MICRO, BUSINESS, AGENCY, ENTERPRISE
   subscriptionStatus String   @default("TRIAL") // TRIAL, ACTIVE, PAST_DUE, CANCELLED

@@ -38,6 +38,7 @@ export function TaxSettingsForm({ initialData }: TaxSettingsFormProps) {
   const necEnabled = watch("necEnabled");
   const sdfEnabled = watch("sdfEnabled");
   const autoUpdate = watch("autoUpdateRates");
+  const accountingFormat = watch("accountingFormat");
 
   const handleSync = async (e: React.MouseEvent) => {
       e.preventDefault();
@@ -98,6 +99,34 @@ export function TaxSettingsForm({ initialData }: TaxSettingsFormProps) {
                         <SelectItem value="ZiG">ZiG (Zimbabwe Gold)</SelectItem>
                     </SelectContent>
                 </Select>
+            </div>
+
+            <div className="border-t" />
+
+            {/* Accounting Export Format */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="font-semibold">Accounting Export Format</Label>
+                <Select
+                  value={accountingFormat || "STANDARD"}
+                  onValueChange={(val) =>
+                    setValue("accountingFormat", val as any, { shouldDirty: true })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="STANDARD">Standard CSV</SelectItem>
+                    <SelectItem value="SAGE">Sage / Pastel Evolution</SelectItem>
+                    <SelectItem value="QUICKBOOKS">QuickBooks</SelectItem>
+                    <SelectItem value="XERO">Xero</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Controls the default layout of the General Ledger export used for your accounting system.
+                </p>
+              </div>
             </div>
 
             <div className="border-t" />
