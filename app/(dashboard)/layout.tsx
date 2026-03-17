@@ -2,7 +2,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { DashboardShell, SubscriptionStatus } from "@/components/dashboard/dashboard-shell";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { getSubscriptionStatus } from "@/lib/auth/subscription";
 
 export default async function DashboardLayout({
   children,
@@ -25,44 +26,7 @@ export default async function DashboardLayout({
       return <div>Error: No organization found. Please contact support.</div>;
   }
 
-  const org = user.organization;
-  let status: SubscriptionStatus['status'] = 'TRIAL';
-  let daysLeft = 0;
-
-  const now = new Date();
-
-  if (org.subscriptionStatus === 'ACTIVE') {
-      if (org.subscriptionEndsAt && now > org.subscriptionEndsAt) {
-          status = 'EXPIRED';
-          daysLeft = 0;
-      } else {
-          status = 'ACTIVE';
-          if (org.subscriptionEndsAt) {
-            const diffTime = Math.abs(org.subscriptionEndsAt.getTime() - now.getTime());
-            daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          } else {
-             daysLeft = 30; // Fallback
-          }
-      }
-  } else if (org.subscriptionStatus === 'TRIAL') {
-      if (now > org.trialEndsAt) {
-          status = 'EXPIRED';
-          daysLeft = 0;
-      } else {
-          status = 'TRIAL';
-          const diffTime = Math.abs(org.trialEndsAt.getTime() - now.getTime());
-          daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-      }
-  } else {
-      // Default fallback
-      status = (org.subscriptionStatus as any) || 'EXPIRED';
-  }
-
-  const subscriptionStatus: SubscriptionStatus = {
-      status,
-      daysLeft,
-      tier: org.subscriptionTier
-  };
+  const subscriptionStatus = getSubscriptionStatus(user.organization);
 
   return (
     <DashboardShell subscriptionStatus={subscriptionStatus}>

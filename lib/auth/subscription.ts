@@ -1,5 +1,53 @@
 import { db } from "@/lib/db";
 
+import { Organization } from "@prisma/client";
+
+export type SubscriptionStatusResult = {
+  status: 'TRIAL' | 'ACTIVE' | 'EXPIRED' | 'PAST_DUE' | 'CANCELLED';
+  daysLeft: number;
+  tier: string;
+};
+
+export function getSubscriptionStatus(org: Organization): SubscriptionStatusResult {
+  let status: SubscriptionStatusResult['status'] = 'TRIAL';
+  let daysLeft = 0;
+
+  const now = new Date();
+
+  if (org.subscriptionStatus === 'ACTIVE') {
+      if (org.subscriptionEndsAt && now > org.subscriptionEndsAt) {
+          status = 'EXPIRED';
+          daysLeft = 0;
+      } else {
+          status = 'ACTIVE';
+          if (org.subscriptionEndsAt) {
+            const diffTime = Math.abs(org.subscriptionEndsAt.getTime() - now.getTime());
+            daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          } else {
+             daysLeft = 30; // Fallback or assume monthly rolling
+          }
+      }
+  } else if (org.subscriptionStatus === 'TRIAL') {
+      if (now > org.trialEndsAt) {
+          status = 'EXPIRED';
+          daysLeft = 0;
+      } else {
+          status = 'TRIAL';
+          const diffTime = Math.abs(org.trialEndsAt.getTime() - now.getTime());
+          daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      }
+  } else {
+      // Default fallback
+      status = (org.subscriptionStatus as any) || 'EXPIRED';
+  }
+
+  return {
+      status,
+      daysLeft,
+      tier: org.subscriptionTier
+  };
+}
+
 export async function checkSubscriptionAccess(orgId: string): Promise<boolean> {
   const org = await db.organization.findUnique({
     where: { id: orgId },

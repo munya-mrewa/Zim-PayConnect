@@ -11,6 +11,8 @@ import { OnboardingWizard } from "@/components/dashboard/onboarding-wizard";
 import { CreditBalance } from "@/components/dashboard/credit-balance";
 import { DashboardStats } from "@/components/dashboard/dashboard-stats";
 import Link from "next/link";
+import { getSubscriptionStatus } from "@/lib/auth/subscription";
+import { TrialIndicator } from "@/components/dashboard/trial-indicator";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -38,12 +40,19 @@ export default async function DashboardPage() {
   ]);
 
   const totalProcessed = volumeData.reduce((acc: number, curr: any) => acc + curr.count, 0);
+  const subscriptionStatus = getSubscriptionStatus(org);
 
   return (
     <div className="flex-1 space-y-8 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
       </div>
+
+      <TrialIndicator 
+        status={subscriptionStatus.status} 
+        daysLeft={subscriptionStatus.daysLeft} 
+        tier={subscriptionStatus.tier}
+      />
       
       {!onboarding.completed && <OnboardingWizard steps={onboarding.steps} />}
 

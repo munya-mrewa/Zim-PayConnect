@@ -7,6 +7,9 @@ import { SettingsForm } from "./settings-form";
 import { PasswordForm } from "./password-form";
 import { TaxSettingsForm } from "./tax-settings-form";
 import { BrandingForm } from "./branding-form";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
 
 import { AccountManagerCard } from "./account-manager-card";
 import { SlaReportDownloadButton } from "@/components/reports/sla-download-button";
@@ -94,7 +97,15 @@ export default async function SettingsPage() {
          <PasswordForm />
 
          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Subscription Plans</h3>
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Subscription Plans</h3>
+                <Button variant="outline" size="sm" asChild>
+                    <Link href="/settings/billing">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Billing History
+                    </Link>
+                </Button>
+            </div>
             <PricingPlans />
          </div>
       </div>
