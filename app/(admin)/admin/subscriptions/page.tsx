@@ -51,6 +51,21 @@ export default async function SubscriptionsPage() {
     }
   };
 
+  const now = new Date();
+
+  const resolveStatus = (org: any): string => {
+    if (org.subscriptionStatus === "TRIAL") {
+      return now > org.trialEndsAt ? "EXPIRED" : "TRIAL";
+    }
+    if (org.subscriptionStatus === "ACTIVE") {
+      if (org.subscriptionEndsAt && now > org.subscriptionEndsAt) {
+        return "PAST_DUE";
+      }
+      return "ACTIVE";
+    }
+    return org.subscriptionStatus;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
@@ -83,7 +98,7 @@ export default async function SubscriptionsPage() {
                   </div>
                 </TableCell>
                 <TableCell>{getTierBadge(org.subscriptionTier)}</TableCell>
-                <TableCell>{getStatusBadge(org.subscriptionStatus)}</TableCell>
+                <TableCell>{getStatusBadge(resolveStatus(org))}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1 text-xs">
                     <User className="h-3 w-3" />

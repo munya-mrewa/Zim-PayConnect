@@ -7,10 +7,20 @@ import Link from "next/link";
 
 export default async function AdminPage() {
   // 1. Fetch System Stats
+  const now = new Date();
+
   const [userCount, orgCount, activeSubs, recentLogs] = await Promise.all([
     db.user.count(),
     db.organization.count(),
-    db.organization.count({ where: { subscriptionStatus: "ACTIVE" } }),
+    db.organization.count({
+      where: {
+        subscriptionStatus: "ACTIVE",
+        OR: [
+          { subscriptionEndsAt: null },
+          { subscriptionEndsAt: { gt: now } },
+        ],
+      },
+    }),
     db.auditLog.findMany({
       take: 10,
       orderBy: { createdAt: "desc" },
