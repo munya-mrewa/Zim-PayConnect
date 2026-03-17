@@ -306,7 +306,7 @@ export async function generateBatchZip(records: FullRecord[], orgName: string, l
 
     // Employer cost high-level summary
     if (allRecords.length > 0) {
-      let employerCsv = `Metric,Value
+      const employerCsv = `Metric,Value
 Total_Employer_Cost,${totalEmployerCost.toFixed(2)}
 Total_Employee_Count,${allRecords.length}
 `;
