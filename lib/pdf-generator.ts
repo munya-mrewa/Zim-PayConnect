@@ -4,6 +4,7 @@ import JSZip from "jszip";
 import { TaxResult, RawPayrollRecord } from "@/lib/ephemeral-engine/types";
 import { generateZimraXml } from "@/lib/xml-generator";
 import { generateGLCSV, GLFormat } from "@/lib/ephemeral-engine/gl-exporter";
+import { sanitizeCsvCell, sanitizeFilename } from "@/lib/utils";
 
 // Combine raw record and calculation result
 type FullRecord = RawPayrollRecord & { taxResult: TaxResult };
@@ -119,17 +120,33 @@ export async function generateBatchZip(records: FullRecord[], orgName: string, l
     // PDFs
     for (const record of batch) {
       const pdfBuffer = await generatePayslipPDF(record, orgName, logoUrl, removeBranding);
-      const fileName = `${record.name.replace(/[^a-z0-9]/gi, '_')}_${record.employeeId}.pdf`;
+      const safeName = sanitizeFilename(record.name, "employee");
+      const safeId = sanitizeFilename(record.employeeId, "id");
+      const fileName = `${safeName}_${safeId}.pdf`;
       folder.file(fileName, pdfBuffer);
     }
 
-    // CSV Summary
+    // CSV Summary (with CSV injection hardening)
     let csvContent = `EmployeeID,Name,Gross,NSSA,NEC,Taxable,PAYE,AIDS_Levy,NetPay,SDF_Employer,Method,YTD_Gross,YTD_Tax_Paid
 `;
     batch.forEach(r => {
       const t = r.taxResult;
-      csvContent += `${r.employeeId},${r.name},${t.grossIncome.toFixed(2)},${t.nssa.toFixed(2)},${(t.nec || 0).toFixed(2)},${t.taxableIncome.toFixed(2)},${t.paye.toFixed(2)},${t.aidsLevy.toFixed(2)},${t.netPay.toFixed(2)},${(t.sdf || 0).toFixed(2)},${t.method || "PAYE"},${r.ytdGross || 0},${r.ytdTaxPaid || 0}
-`;
+      const row = [
+        sanitizeCsvCell(String(r.employeeId)),
+        sanitizeCsvCell(String(r.name)),
+        t.grossIncome.toFixed(2),
+        t.nssa.toFixed(2),
+        (t.nec || 0).toFixed(2),
+        t.taxableIncome.toFixed(2),
+        t.paye.toFixed(2),
+        t.aidsLevy.toFixed(2),
+        t.netPay.toFixed(2),
+        (t.sdf || 0).toFixed(2),
+        sanitizeCsvCell(String(t.method || "PAYE")),
+        String(r.ytdGross || 0),
+        String(r.ytdTaxPaid || 0),
+      ];
+      csvContent += row.join(",") + "\n";
     });
     folder.file(summaryName, csvContent);
   };

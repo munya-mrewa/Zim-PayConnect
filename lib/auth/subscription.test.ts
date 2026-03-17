@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { checkProcessingAccess, checkSubscriptionAccess } from './subscription';
+import { checkProcessingAccess, checkSubscriptionAccess, requireActiveSubscription } from './subscription';
 import { db } from '@/lib/db';
 
 // Mock the db module
@@ -132,6 +132,61 @@ describe('Subscription Logic', () => {
 
       const result = await checkProcessingAccess(mockOrgId);
       expect(result).toEqual({ authorized: false, method: null });
+    });
+  });
+
+  describe('requireActiveSubscription', () => {
+    it('allows processing when subscription is active', async () => {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7);
+
+      (db.organization.findUnique as any).mockResolvedValue({
+        subscriptionStatus: 'ACTIVE',
+        trialEndsAt: null,
+        subscriptionEndsAt: futureDate,
+      });
+
+      await expect(requireActiveSubscription(mockOrgId)).resolves.not.toThrow();
+    });
+
+    it('throws when no active subscription and no credits', async () => {
+      const pastDate = new Date();
+      pastDate.setDate(pastDate.getDate() - 1);
+
+      // First call: subscription expired
+      (db.organization.findUnique as any)
+        .mockResolvedValueOnce({
+          subscriptionStatus: 'TRIAL',
+          trialEndsAt: pastDate,
+          subscriptionEndsAt: null,
+        })
+        // Second call: zero credits
+        .mockResolvedValueOnce({
+          credits: 0,
+        });
+
+      await expect(requireActiveSubscription(mockOrgId)).rejects.toThrow(
+        'SUBSCRIPTION_EXPIRED',
+      );
+    });
+
+    it('allows processing when subscription expired but credits exist', async () => {
+      const pastDate = new Date();
+      pastDate.setDate(pastDate.getDate() - 1);
+
+      // First call: subscription expired
+      (db.organization.findUnique as any)
+        .mockResolvedValueOnce({
+          subscriptionStatus: 'TRIAL',
+          trialEndsAt: pastDate,
+          subscriptionEndsAt: null,
+        })
+        // Second call: has credits
+        .mockResolvedValueOnce({
+          credits: 3,
+        });
+
+      await expect(requireActiveSubscription(mockOrgId)).resolves.not.toThrow();
     });
   });
 });

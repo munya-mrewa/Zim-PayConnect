@@ -51,7 +51,11 @@ export async function POST(req: Request) {
           email,
           hashedPassword: hashedPassword,
           organizationId: newOrg.id,
-          role: "OWNER"
+          role: "OWNER",
+          // Explicitly ensure 2FA is OFF for all new users
+          twoFactorEnabled: false,
+          twoFactorToken: null,
+          twoFactorExpires: null,
         },
       });
     });

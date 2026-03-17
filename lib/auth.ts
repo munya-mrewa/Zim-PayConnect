@@ -1,6 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
+import crypto from "crypto";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 
@@ -52,34 +53,50 @@ export const authOptions: NextAuthOptions = {
         // 2FA Check
         if (user.twoFactorEnabled) {
           if (credentials.code) {
-             // Verify Code
-             if (user.twoFactorToken === credentials.code && user.twoFactorExpires && user.twoFactorExpires > new Date()) {
-                // Clear token
-                await db.user.update({
-                  where: { id: user.id },
-                  data: { twoFactorToken: null, twoFactorExpires: null }
-                });
-             } else {
-                throw new Error("Invalid or expired 2FA code");
-             }
+            // Verify Code (compare against hashed value)
+            const providedHash = crypto
+              .createHash("sha256")
+              .update(credentials.code)
+              .digest("hex");
+
+            if (
+              user.twoFactorToken === providedHash &&
+              user.twoFactorExpires &&
+              user.twoFactorExpires > new Date()
+            ) {
+              // Clear token after successful verification
+              await db.user.update({
+                where: { id: user.id },
+                data: { twoFactorToken: null, twoFactorExpires: null },
+              });
+            } else {
+              throw new Error("Invalid or expired 2FA code");
+            }
           } else {
-             // Generate Code
-             const code = Math.floor(100000 + Math.random() * 900000).toString();
-             const expires = new Date(new Date().getTime() + 10 * 60 * 1000); // 10 mins
+            // Generate Code
+            const code = Math.floor(100000 + Math.random() * 900000).toString();
+            const expires = new Date(
+              new Date().getTime() + 10 * 60 * 1000,
+            ); // 10 mins
 
-             await db.user.update({
-               where: { id: user.id },
-               data: { twoFactorToken: code, twoFactorExpires: expires }
-             });
+            const hashedCode = crypto
+              .createHash("sha256")
+              .update(code)
+              .digest("hex");
 
-             // Send Email
-             await sendEmail({
-               to: user.email,
-               subject: "Your 2FA Login Code",
-               html: `<p>Your code is: <strong>${code}</strong></p><p>It expires in 10 minutes.</p>`
-             });
+            await db.user.update({
+              where: { id: user.id },
+              data: { twoFactorToken: hashedCode, twoFactorExpires: expires },
+            });
 
-             throw new Error("2FA_REQUIRED");
+            // Send Email (plain code to user)
+            await sendEmail({
+              to: user.email,
+              subject: "Your 2FA Login Code",
+              html: `<p>Your code is: <strong>${code}</strong></p><p>It expires in 10 minutes.</p>`,
+            });
+
+            throw new Error("2FA_REQUIRED");
           }
         }
 

@@ -107,26 +107,98 @@ describe("Tax Calculator Engine", () => {
     });
   });
 
-  describe("Configuration Overrides", () => {
+  describe("Configuration Overrides & FDS Edge Cases", () => {
     it("should allow disabling NSSA via config", () => {
-       const record: RawPayrollRecord = {
+      const record: RawPayrollRecord = {
         employeeId: "004",
         name: "Exempt",
         basicSalary: 500,
         currency: "USD",
         period: "2026-02",
-        isPermanent: true
+        isPermanent: true,
       };
 
       const result = calculateTax(record, { nssaEnabled: false });
       expect(result.nssa).toBe(0);
-      
+
       // Taxable should be full 500 now
       // 0-100: 0
       // 100-300: 40
       // 300-500: 200 * 0.25 = 50
       // Total: 90
       expect(result.paye).toBeCloseTo(90, 2);
+    });
+
+    it("should use organization overrides for NSSA ceilings and rates", () => {
+      const record: RawPayrollRecord = {
+        employeeId: "005",
+        name: "Org Override",
+        basicSalary: 2000,
+        currency: "USD",
+        period: "2026-02",
+        isPermanent: true,
+      };
+
+      const customRate = 0.05;
+      const customCeiling = 1000;
+
+      const result = calculateTax(record, {
+        nssaEnabled: true,
+        nssaRate: customRate,
+        nssaCeilingUSD: customCeiling,
+      } as any);
+
+      // NSSA should be applied on custom ceiling (1000) at 5%
+      expect(result.nssa).toBeCloseTo(customCeiling * customRate, 2);
+    });
+
+    it("should handle FDS cumulative calculation for month 12 with YTD values", () => {
+      const record: RawPayrollRecord = {
+        employeeId: "FDS12",
+        name: "Year End FDS",
+        basicSalary: 1000,
+        allowances: 0,
+        currency: "USD",
+        period: "2026-12",
+        isPermanent: true,
+        // Assume 11 months of similar gross already paid
+        ytdGross: 11000,
+        // Rough prior tax paid; we mainly assert non-zero PAYE
+        ytdTaxPaid: 1000,
+      };
+
+      const result = calculateTax(record, {
+        processingMonth: 12,
+        nssaEnabled: true,
+      } as any);
+
+      expect(result.method).toBe("FDS");
+      // For realistic numbers PAYE should not be zero
+      expect(result.paye).not.toBe(0);
+    });
+
+    it("can produce a negative PAYE (refund scenario) in FDS mode", () => {
+      const record: RawPayrollRecord = {
+        employeeId: "FDS-REFUND",
+        name: "Refund Case",
+        basicSalary: 500,
+        currency: "USD",
+        period: "2026-03",
+        isPermanent: true,
+        ytdGross: 5000,
+        // Deliberately set high prior tax paid to force overpayment
+        ytdTaxPaid: 5000,
+      };
+
+      const result = calculateTax(record, {
+        processingMonth: 3,
+        nssaEnabled: true,
+      } as any);
+
+      expect(result.method).toBe("FDS");
+      expect(result.paye).toBeLessThan(0);
+      // AIDS levy should follow the sign of PAYE
+      expect(result.aidsLevy).toBeLessThan(0);
     });
   });
 

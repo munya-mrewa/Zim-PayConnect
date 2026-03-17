@@ -1,4 +1,5 @@
 import { TaxResult, RawPayrollRecord } from "./types";
+import { sanitizeCsvCell } from "@/lib/utils";
 
 type FullRecord = RawPayrollRecord & { taxResult: TaxResult };
 
@@ -47,15 +48,18 @@ export function generateGLCSV(records: FullRecord[], orgName: string, format: GL
   const rows: string[] = [];
 
   const addRow = (desc: string, debit: number, credit: number) => {
+      const safeDesc = sanitizeCsvCell(desc);
+      const safeRef = sanitizeCsvCell(reference);
+      const safeDate = sanitizeCsvCell(today);
       if (format === "SAGE") {
           // Period,Date,Reference,Description,Account,Debit,Credit,TaxType
-          rows.push(`${period},${today},${reference},${desc},,${debit.toFixed(2)},${credit.toFixed(2)},00`);
+          rows.push(`${period},${safeDate},${safeRef},${safeDesc},,${debit.toFixed(2)},${credit.toFixed(2)},00`);
       } else if (format === "QUICKBOOKS") {
           // Date,RefNumber,Account,Memo,Debit,Credit
-          rows.push(`${today},${reference},,${desc},${debit.toFixed(2)},${credit.toFixed(2)}`);
+          rows.push(`${safeDate},${safeRef},,${safeDesc},${debit.toFixed(2)},${credit.toFixed(2)}`);
       } else {
           // STANDARD: Date,Reference,Description,Account,Debit,Credit
-          rows.push(`${today},${reference},${desc},,${debit.toFixed(2)},${credit.toFixed(2)}`);
+          rows.push(`${safeDate},${safeRef},${safeDesc},,${debit.toFixed(2)},${credit.toFixed(2)}`);
       }
   };
 
