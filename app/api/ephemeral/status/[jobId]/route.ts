@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { payrollQueue } from "@/lib/queue/worker";
+import { payrollQueue } from "@/lib/queue/client";
 
 export async function GET(
     request: Request,

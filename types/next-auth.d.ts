@@ -11,6 +11,7 @@ declare module "next-auth" {
       organizationId: string
       subscriptionStatus?: string
       trialEndsAt?: string
+      isImpersonating?: boolean
     } & DefaultSession["user"]
   }
 
@@ -19,6 +20,7 @@ declare module "next-auth" {
     organizationId: string
     subscriptionStatus?: string
     trialEndsAt?: string
+    isImpersonating?: boolean
   }
 }
 
@@ -29,5 +31,6 @@ declare module "next-auth/jwt" {
     organizationId: string
     subscriptionStatus?: string
     trialEndsAt?: string
+    isImpersonating?: boolean
   }
 }

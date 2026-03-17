@@ -4,6 +4,7 @@ import { compare } from "bcryptjs";
 import crypto from "crypto";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
+import { cookies } from "next/headers";
 
 export const authOptions: NextAuthOptions = {
   // adapter: PrismaAdapter(db), // Optional: If we want to persist sessions in DB, but JWT is default and fine.
@@ -137,6 +138,24 @@ export const authOptions: NextAuthOptions = {
         session.user.organizationId = token.organizationId as string;
         (session.user as any).subscriptionStatus = token.subscriptionStatus;
         (session.user as any).trialEndsAt = token.trialEndsAt;
+
+        // Impersonation Override
+        try {
+          const cookieStore = await cookies();
+          const impersonatedOrgId = cookieStore.get("impersonate_org")?.value;
+          
+          if (impersonatedOrgId && (session.user.role === 'ADMIN' || session.user.role === 'SUPPORT_AGENT')) {
+             // Verify the org exists (optional but safer)
+             // For performance, we might skip DB check here, but let's trust the cookie for now
+             // effectively allowing the admin to "try" to access any org ID.
+             // Access control will happen downstream if the org ID is invalid.
+             session.user.organizationId = impersonatedOrgId;
+             session.user.isImpersonating = true;
+          }
+        } catch (e) {
+          // cookies() might fail if not in a request context (e.g. build time or some edge cases)
+          // Just ignore impersonation in that case.
+        }
       }
       return session;
     },

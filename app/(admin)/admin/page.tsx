@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { AccountManagerSelect } from "./account-manager-select";
+import { ImpersonateButton } from "./impersonate-button";
 import { User, AuditAction, AuditStatus } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Building2, CreditCard, Activity, CheckCircle2, AlertCircle } from "lucide-react";
@@ -108,6 +109,7 @@ export default async function AdminPage() {
                   <tr className="border-b transition-colors">
                     <th className="h-10 px-2 text-left font-medium text-muted-foreground">Org</th>
                     <th className="h-10 px-2 text-left font-medium text-muted-foreground">Manager</th>
+                    <th className="h-10 px-2 text-left font-medium text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -120,6 +122,9 @@ export default async function AdminPage() {
                           currentManagerId={org.accountManagerId} 
                           agents={agents} 
                         />
+                      </td>
+                      <td className="p-2">
+                        <ImpersonateButton orgId={org.id} />
                       </td>
                     </tr>
                   ))}
