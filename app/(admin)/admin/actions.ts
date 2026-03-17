@@ -49,7 +49,8 @@ export async function toggleUserStatus(userId: string, currentStatus: boolean) {
   try {
     await db.user.update({
       where: { id: userId },
-      data: { isActive: !currentStatus }
+      // Cast to any to avoid Prisma type mismatch if client is out of date
+      data: { isActive: !currentStatus } as any,
     });
     
     revalidatePath("/admin/users");

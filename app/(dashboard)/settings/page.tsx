@@ -64,8 +64,8 @@ export default async function SettingsPage() {
                 tin: user.organization.tin || "",
                 contactEmail: user.organization.contactEmail || "",
                 address: user.organization.address || "",
-                nssaNumber: user.organization.nssaNumber || "",
-                necNumber: user.organization.necNumber || ""
+                nssaNumber: (user.organization as any).nssaNumber || "",
+                necNumber: (user.organization as any).necNumber || ""
             }}
          />
 

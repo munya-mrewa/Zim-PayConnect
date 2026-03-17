@@ -18,7 +18,7 @@ export default async function UsersAdminPage() {
     orderBy: {
       createdAt: "desc"
     }
-  });
+  }) as any[];
 
   return (
     <div className="space-y-6">

@@ -45,8 +45,8 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // Check if user is active
-        if (user.isActive === false) {
+        // Check if user is active (cast to any to avoid Prisma type mismatch)
+        if ((user as any).isActive === false) {
             throw new Error("Your account has been deactivated. Please contact support.");
         }
 

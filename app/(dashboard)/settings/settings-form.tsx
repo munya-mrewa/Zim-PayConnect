@@ -17,8 +17,8 @@ interface SettingsFormProps {
     tin: string;
     contactEmail: string;
     address: string;
-    nssaNumber?: string | null;
-    necNumber?: string | null;
+    nssaNumber?: string;
+    necNumber?: string;
   };
 }
 

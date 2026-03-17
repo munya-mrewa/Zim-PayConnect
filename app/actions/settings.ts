@@ -42,7 +42,7 @@ export async function updateOrganization(data: SettingsValues) {
         address,
         nssaNumber,
         necNumber,
-      },
+      } as any,
       ip
     );
 
