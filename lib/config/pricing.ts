@@ -64,7 +64,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     id: 'ENTERPRISE',
     name: 'Enterprise',
     description: 'Custom solutions for large-scale operations.',
-    price: 750,
+    price: 500,
     currency: 'USD',
     period: 'monthly',
     maxEmployees: 'Unlimited',
