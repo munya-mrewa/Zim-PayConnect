@@ -5,6 +5,7 @@ import { TaxResult, RawPayrollRecord } from "@/lib/ephemeral-engine/types";
 import { generateZimraXml } from "@/lib/xml-generator";
 import { generateGLCSV, GLFormat } from "@/lib/ephemeral-engine/gl-exporter";
 import { sanitizeCsvCell, sanitizeFilename } from "@/lib/utils";
+import { buildLoanScheduleCsv } from "@/lib/loan-schedule";
 
 // Combine raw record and calculation result
 type FullRecord = RawPayrollRecord & { taxResult: TaxResult };
@@ -154,6 +155,170 @@ export async function generateBatchZip(records: FullRecord[], orgName: string, l
   // Process both batches
   await processBatch(fdsRecords, fdsFolder, "FDS_Summary.csv");
   await processBatch(nonFdsRecords, nonFdsFolder, "Non_FDS_Summary.csv");
+
+  // NSSA & NEC Contribution Schedules (POBF/NEC-friendly layouts)
+  if (rootFolder) {
+    const allRecords = [...fdsRecords, ...nonFdsRecords];
+
+    // For NSSA we need organization context; we'll pass values via metadata in a future enhancement
+    let nssaCsv = `Employer_Name,Employer_NSSA_Number,Employer_TIN,Pay_Year,Pay_Month,Employee_National_ID,Employee_NSSA_Number,Employee_Name,Employee_Payroll_No,Basic_Earnings,Other_Earnings,Total_Earnings,Employee_NSSA,Employer_NSSA,Total_NSSA
+`;
+
+    let necCsv = `Employer_Name,Employer_NEC_Number,Employer_TIN,Sector,Pay_Year,Pay_Month,Employee_Name,Employee_Payroll_No,NEC_Grade,Department,Cost_Center,Gross_Earnings,NEC_Employee,NEC_Employer,Total_NEC
+`;
+
+    const now = new Date();
+    const payYear = now.getFullYear();
+    const payMonth = (now.getMonth() + 1).toString().padStart(2, "0");
+
+    allRecords.forEach((r) => {
+      const t = r.taxResult;
+      const gross = t.grossIncome;
+      const otherEarnings = (r.allowances || 0) - (r.exemptAllowances || 0);
+
+      if (t.nssa && t.nssa !== 0) {
+        const employee = t.nssa;
+        const employer = t.nssa; // 1:1 assumption
+        const total = employee + employer;
+        const row = [
+          "", // Employer_Name (filled from org at export time if needed)
+          "", // Employer_NSSA_Number
+          "", // Employer_TIN
+          payYear,
+          payMonth,
+          sanitizeCsvCell(r.nationalId || ""),
+          "", // Employee_NSSA_Number (optional, not tracked yet)
+          sanitizeCsvCell(r.name),
+          sanitizeCsvCell(r.employeeId),
+          r.basicSalary.toFixed(2),
+          otherEarnings.toFixed(2),
+          gross.toFixed(2),
+          employee.toFixed(2),
+          employer.toFixed(2),
+          total.toFixed(2),
+        ];
+        nssaCsv += row.join(",") + "\n";
+      }
+
+      if (t.nec && t.nec !== 0) {
+        const employeeNec = t.nec;
+        const employerNec = t.nec; // 1:1 assumption
+        const totalNec = employeeNec + employerNec;
+        const row = [
+          "", // Employer_Name
+          "", // Employer_NEC_Number
+          "", // Employer_TIN
+          "", // Sector (can be populated from org.necSector if needed)
+          payYear,
+          payMonth,
+          sanitizeCsvCell(r.name),
+          sanitizeCsvCell(r.employeeId),
+          sanitizeCsvCell(r.necGrade || ""),
+          sanitizeCsvCell(r.department || ""),
+          sanitizeCsvCell(r.costCenter || ""),
+          gross.toFixed(2),
+          employeeNec.toFixed(2),
+          employerNec.toFixed(2),
+          totalNec.toFixed(2),
+        ];
+        necCsv += row.join(",") + "\n";
+      }
+    });
+
+    // Only attach files if there is at least one data row beyond header
+    if (nssaCsv.trim().split("\n").length > 1) {
+      rootFolder.file("NSSA_Contribution_Schedule.csv", nssaCsv);
+    }
+    if (necCsv.trim().split("\n").length > 1) {
+      rootFolder.file("NEC_Return_Schedule.csv", necCsv);
+    }
+  }
+
+  // Department / Cost Centre & Employer Cost Summaries
+  if (rootFolder) {
+    type GroupKey = string;
+    interface Agg {
+      gross: number;
+      net: number;
+      employerCost: number;
+    }
+
+    const deptMap = new Map<GroupKey, Agg>();
+    const costCenterMap = new Map<GroupKey, Agg>();
+    let totalEmployerCost = 0;
+
+    const allRecords = [...fdsRecords, ...nonFdsRecords];
+
+    allRecords.forEach((r) => {
+      const t = r.taxResult;
+      const employerNssa = t.nssa;
+      const employerNec = t.nec || 0;
+      const employerSdf = t.sdf || 0;
+      const employerCost = employerNssa + employerNec + employerSdf;
+      totalEmployerCost += employerCost;
+
+      const updateAgg = (map: Map<GroupKey, Agg>, key: string) => {
+        const k = key || "Unspecified";
+        const current = map.get(k) || { gross: 0, net: 0, employerCost: 0 };
+        current.gross += t.grossIncome;
+        current.net += t.netPay;
+        current.employerCost += employerCost;
+        map.set(k, current);
+      };
+
+      if (r.department) {
+        updateAgg(deptMap, r.department);
+      }
+      if (r.costCenter) {
+        updateAgg(costCenterMap, r.costCenter);
+      }
+    });
+
+    if (deptMap.size > 0) {
+      let deptCsv = `Department,Gross,Net,Employer_Cost
+`;
+      for (const [dept, agg] of deptMap.entries()) {
+        const row = [
+          sanitizeCsvCell(dept),
+          agg.gross.toFixed(2),
+          agg.net.toFixed(2),
+          agg.employerCost.toFixed(2),
+        ];
+        deptCsv += row.join(",") + "\n";
+      }
+      rootFolder.file("Department_Payroll_Summary.csv", deptCsv);
+    }
+
+    if (costCenterMap.size > 0) {
+      let ccCsv = `Cost_Center,Gross,Net,Employer_Cost
+`;
+      for (const [cc, agg] of costCenterMap.entries()) {
+        const row = [
+          sanitizeCsvCell(cc),
+          agg.gross.toFixed(2),
+          agg.net.toFixed(2),
+          agg.employerCost.toFixed(2),
+        ];
+        ccCsv += row.join(",") + "\n";
+      }
+      rootFolder.file("Cost_Center_Payroll_Summary.csv", ccCsv);
+    }
+
+    // Employer cost high-level summary
+    if (allRecords.length > 0) {
+      let employerCsv = `Metric,Value
+Total_Employer_Cost,${totalEmployerCost.toFixed(2)}
+Total_Employee_Count,${allRecords.length}
+`;
+      rootFolder.file("Employer_Cost_Summary.csv", employerCsv);
+    }
+
+    // Loan / Advance amortization schedule (if any loan metadata present)
+    const loanCsv = buildLoanScheduleCsv(allRecords);
+    if (loanCsv) {
+      rootFolder.file("Loan_Amortization_Schedule.csv", loanCsv);
+    }
+  }
 
   // Generate ZIMRA XML Return (Combined)
   if (tin) {

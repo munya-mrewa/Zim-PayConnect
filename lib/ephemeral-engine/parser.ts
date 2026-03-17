@@ -69,7 +69,9 @@ export async function* parseCSVStream(stream: Readable, mapping?: ColumnMapping)
   }));
 
   let headers: string[] | null = null;
-  let indices: Record<keyof ColumnMapping, number> | null = null;
+  let indices: (Record<keyof ColumnMapping, number> & {
+    // Ensure we always have numeric indices, but we'll mark unknowns as -1
+  }) | null = null;
 
   for await (const record of parser) {
     if (!headers) {
@@ -96,7 +98,7 @@ export async function* parseCSVStream(stream: Readable, mapping?: ColumnMapping)
         const salaryIdx = find(["salary", "basic", "basicsalary", "gross", "amount", "income"], mapping?.basicSalary);
         
         // Optional fields
-        const tinIdx = find(["tin", "taxid", "nationalid"], mapping?.tin);
+        const tinIdx = find(["tin", "taxid"], mapping?.tin);
         const currIdx = find(["currency", "curr", "denomination"], mapping?.currency);
         const permIdx = find(["permanent", "ispermanent", "type", "contract"], mapping?.isPermanent);
         const ytdTaxIdx = find(["ytdtax", "taxpaid", "yeartodate", "ptd"], mapping?.ytdTaxPaid);
@@ -104,6 +106,20 @@ export async function* parseCSVStream(stream: Readable, mapping?: ColumnMapping)
         
         const exemptIdx = find(["exempt", "taxfree", "nontaxable", "exemptallowance"], mapping?.exemptAllowances);
         const allowIdx = find(["allowance", "allowances", "benefits"], mapping?.allowances);
+
+        const nationalIdIdx = find(["nationalid", "idnumber", "id_no"], mapping?.nationalId);
+
+        // Master data enrichment (optional)
+        const departmentIdx = find(["department", "dept"], mapping?.department);
+        const costCenterIdx = find(["costcenter", "costcentre", "cost_centre"], mapping?.costCenter);
+        const bankNameIdx = find(["bank", "bankname"], mapping?.bankName);
+        const bankLast4Idx = find(["accountlast4", "acctlast4", "banklast4"], mapping?.bankAccountLast4);
+
+        // Loan / advance (optional)
+        const loanPrincipalIdx = find(["loanprincipal", "loan_amount", "principal"], mapping?.loanPrincipal);
+        const loanRateIdx = find(["loanrate", "loaninterestrate", "rate"], mapping?.loanAnnualRate);
+        const loanTermIdx = find(["loanterm", "loanmonths", "termmonths"], mapping?.loanTermMonths);
+        const loanInstallmentIdx = find(["installmentno", "installment", "instalment"], mapping?.loanInstallmentNumber);
 
         // Check required
         if (idIdx === -1 || nameIdx === -1 || salaryIdx === -1) {
@@ -120,7 +136,17 @@ export async function* parseCSVStream(stream: Readable, mapping?: ColumnMapping)
             ytdTaxPaid: ytdTaxIdx,
             ytdGross: ytdGrossIdx,
             exemptAllowances: exemptIdx,
-            allowances: allowIdx
+            allowances: allowIdx,
+            department: departmentIdx,
+            costCenter: costCenterIdx,
+            bankName: bankNameIdx,
+            bankAccountLast4: bankLast4Idx,
+            nationalId: nationalIdIdx,
+            necGrade: find(["necgrade", "grade"], mapping?.necGrade),
+            loanPrincipal: loanPrincipalIdx,
+            loanAnnualRate: loanRateIdx,
+            loanTermMonths: loanTermIdx,
+            loanInstallmentNumber: loanInstallmentIdx,
         };
         continue;
     }
@@ -148,6 +174,26 @@ export async function* parseCSVStream(stream: Readable, mapping?: ColumnMapping)
     const allowStr = indices.allowances !== -1 ? record[indices.allowances] : undefined;
     const allowances = allowStr ? parseFloat(allowStr.replace(/[^0-9.-]/g, '')) : undefined;
 
+    const department = indices.department !== -1 ? record[indices.department] : undefined;
+    const costCenter = indices.costCenter !== -1 ? record[indices.costCenter] : undefined;
+    const bankName = indices.bankName !== -1 ? record[indices.bankName] : undefined;
+    const bankAccountLast4 = indices.bankAccountLast4 !== -1 ? record[indices.bankAccountLast4] : undefined;
+
+    const nationalId = indices.nationalId !== -1 ? record[indices.nationalId] : undefined;
+    const necGrade = indices.necGrade !== -1 ? record[indices.necGrade] : undefined;
+
+    const loanPrincipalStr = indices.loanPrincipal !== -1 ? record[indices.loanPrincipal] : undefined;
+    const loanPrincipal = loanPrincipalStr ? parseFloat(loanPrincipalStr.replace(/[^0-9.-]/g, '')) : undefined;
+
+    const loanRateStr = indices.loanAnnualRate !== -1 ? record[indices.loanAnnualRate] : undefined;
+    const loanAnnualRate = loanRateStr ? parseFloat(loanRateStr.replace(/[^0-9.-]/g, '')) : undefined;
+
+    const loanTermStr = indices.loanTermMonths !== -1 ? record[indices.loanTermMonths] : undefined;
+    const loanTermMonths = loanTermStr ? parseInt(loanTermStr.replace(/[^0-9]/g, ''), 10) : undefined;
+
+    const loanInstStr = indices.loanInstallmentNumber !== -1 ? record[indices.loanInstallmentNumber] : undefined;
+    const loanInstallmentNumber = loanInstStr ? parseInt(loanInstStr.replace(/[^0-9]/g, ''), 10) : undefined;
+
     if (!id || !name || !salaryStr) continue;
 
     const salary = parseFloat(salaryStr.replace(/[^0-9.-]/g, ''));
@@ -171,7 +217,17 @@ export async function* parseCSVStream(stream: Readable, mapping?: ColumnMapping)
       ytdTaxPaid: !isNaN(ytdTaxPaid!) ? ytdTaxPaid : undefined,
       ytdGross: !isNaN(ytdGross!) ? ytdGross : undefined,
       exemptAllowances: !isNaN(exemptAllowances!) ? exemptAllowances : undefined,
-      allowances: !isNaN(allowances!) ? allowances : undefined
+      allowances: !isNaN(allowances!) ? allowances : undefined,
+      department: department || undefined,
+      costCenter: costCenter || undefined,
+      bankName: bankName || undefined,
+      bankAccountLast4: bankAccountLast4 || undefined,
+      nationalId: nationalId || undefined,
+      necGrade: necGrade || undefined,
+      loanPrincipal: !isNaN(loanPrincipal!) ? loanPrincipal : undefined,
+      loanAnnualRate: !isNaN(loanAnnualRate!) ? loanAnnualRate : undefined,
+      loanTermMonths: !isNaN(loanTermMonths!) ? loanTermMonths : undefined,
+      loanInstallmentNumber: !isNaN(loanInstallmentNumber!) ? loanInstallmentNumber : undefined,
     };
   }
 }

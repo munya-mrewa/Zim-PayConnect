@@ -28,7 +28,7 @@ export async function updateOrganization(data: SettingsValues) {
       return { error: "Invalid fields", details: validatedFields.error.flatten() };
     }
 
-    const { name, tin, contactEmail, address } = validatedFields.data;
+    const { name, tin, contactEmail, address, nssaNumber, necNumber } = validatedFields.data;
     const headerList = await headers();
     const ip = headerList.get("x-client-ip") || "unknown";
 
@@ -40,6 +40,8 @@ export async function updateOrganization(data: SettingsValues) {
         tin,
         contactEmail,
         address,
+        nssaNumber,
+        necNumber,
       },
       ip
     );

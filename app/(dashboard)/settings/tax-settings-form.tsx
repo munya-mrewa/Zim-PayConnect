@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calculator, Loader2, RefreshCw } from "lucide-react";
+import { NEC_SECTORS } from "@/lib/config/nec-sectors";
 
 interface TaxSettingsFormProps {
   initialData: TaxSettingsValues;
@@ -177,14 +178,41 @@ export function TaxSettingsForm({ initialData }: TaxSettingsFormProps) {
 
             {/* NEC */}
             <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                     <input 
-                        type="checkbox" 
-                        id="necEnabled" 
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        {...register("necEnabled")} 
-                    />
-                    <Label htmlFor="necEnabled" className="font-semibold">NEC (Employment Council)</Label>
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                        <input 
+                            type="checkbox" 
+                            id="necEnabled" 
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            {...register("necEnabled")} 
+                        />
+                        <Label htmlFor="necEnabled" className="font-semibold">NEC (Employment Council)</Label>
+                    </div>
+                    <div className="space-y-1 text-right">
+                        <Label className="text-xs text-muted-foreground">Sector Preset</Label>
+                        <Select
+                          onValueChange={(sectorId) => {
+                            const preset = NEC_SECTORS.find(s => s.id === sectorId);
+                            if (!preset) return;
+                            setValue("necEnabled", preset.defaultRate > 0, { shouldDirty: true });
+                            if (preset.defaultRate > 0) {
+                              setValue("necRate", preset.defaultRate, { shouldDirty: true });
+                            }
+                          }}
+                          defaultValue="GENERIC"
+                        >
+                          <SelectTrigger className="h-8 w-52 text-xs">
+                            <SelectValue placeholder="Select NEC Sector" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {NEC_SECTORS.map((sector) => (
+                              <SelectItem key={sector.id} value={sector.id} className="text-xs">
+                                {sector.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                    </div>
                 </div>
                  {necEnabled && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6">

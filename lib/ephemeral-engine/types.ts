@@ -2,6 +2,7 @@ export interface RawPayrollRecord {
   employeeId: string;
   name: string;
   tin?: string;
+  nationalId?: string;
   basicSalary: number;
   allowances?: number; // Total Allowances
   exemptAllowances?: number; // Portion of Allowances that is Tax Exempt
@@ -10,6 +11,20 @@ export interface RawPayrollRecord {
   period?: string; // e.g. "2026-02"
   currency: "USD" | "ZiG";
   isPermanent: boolean;
+
+  // Ephemeral master data enrichment (never persisted as employees)
+  department?: string;
+  costCenter?: string;
+  bankName?: string;
+  bankAccountLast4?: string;
+
+  necGrade?: string;
+
+  // Optional loan/advance metadata for amortization helper outputs
+  loanPrincipal?: number;
+  loanAnnualRate?: number; // e.g. 0.12 for 12% p.a.
+  loanTermMonths?: number;
+  loanInstallmentNumber?: number; // Current installment number for this period
 }
 
 export interface TaxConfig {
@@ -32,11 +47,22 @@ export interface ColumnMapping {
   basicSalary: string;
   currency?: string;
   tin?: string;
+  nationalId?: string;
   isPermanent?: string;
   ytdGross?: string;
   ytdTaxPaid?: string;
   exemptAllowances?: string;
   allowances?: string;
+
+  department?: string;
+  costCenter?: string;
+  bankName?: string;
+  bankAccountLast4?: string;
+  necGrade?: string;
+  loanPrincipal?: string;
+  loanAnnualRate?: string;
+  loanTermMonths?: string;
+  loanInstallmentNumber?: string;
 }
 
 export interface TaxResult {

@@ -5,6 +5,8 @@ export const settingsSchema = z.object({
   tin: z.string().min(5, { message: "TIN must be at least 5 characters." }),
   contactEmail: z.string().email({ message: "Invalid email address." }),
   address: z.string().optional(),
+  nssaNumber: z.string().optional(),
+  necNumber: z.string().optional(),
 });
 
 export const taxSettingsSchema = z.object({

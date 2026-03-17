@@ -17,6 +17,8 @@ interface SettingsFormProps {
     tin: string;
     contactEmail: string;
     address: string;
+    nssaNumber?: string | null;
+    necNumber?: string | null;
   };
 }
 
@@ -69,6 +71,14 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
               <Label htmlFor="tin">Taxpayer ID (TIN)</Label>
               <Input id="tin" {...register("tin")} disabled={isPending} />
               {errors.tin && <p className="text-sm text-red-500">{errors.tin.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="nssaNumber">NSSA Employer Number (Optional)</Label>
+              <Input id="nssaNumber" {...register("nssaNumber")} disabled={isPending} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="necNumber">NEC Registration Number (Optional)</Label>
+              <Input id="necNumber" {...register("necNumber")} disabled={isPending} />
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="contactEmail">Contact Email</Label>
