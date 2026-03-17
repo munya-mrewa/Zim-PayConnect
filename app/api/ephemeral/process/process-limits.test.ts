@@ -34,10 +34,14 @@ vi.mock('@/lib/ephemeral-engine/parser', () => ({
   MappingRequiredError: class extends Error {}
 }));
 
-vi.mock('@/lib/queue/worker', () => ({
+vi.mock('@/lib/queue/client', () => ({
   payrollQueue: {
     add: vi.fn().mockResolvedValue({ id: 'job-123' }),
   },
+  cronQueue: {
+    add: vi.fn(),
+  },
+  connection: {},
 }));
 
 // Helper to create a mock request
