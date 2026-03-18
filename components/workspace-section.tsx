@@ -7,6 +7,8 @@ import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(ScrollTrigger);
 
+import Image from "next/image";
+
 const WORKSPACE_IMAGES = [
   {
     src: "/images/landing/workspace-1.png",
@@ -104,10 +106,12 @@ export function WorkspaceSection() {
               className="group relative"
             >
               <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/50 ring-1 ring-white/5 shadow-2xl shadow-black/50">
-                <img
+                <Image
                   src={item.src}
                   alt={item.alt}
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                 />
                 <div
                   className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"

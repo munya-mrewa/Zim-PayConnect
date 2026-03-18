@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { SUBSCRIPTION_PLANS, SubscriptionPlanId } from "@/lib/config/pricing";
+import { AuditService } from "@/lib/audit-service";
+import { AuditAction, AuditStatus } from "@prisma/client";
 
 export async function POST(request: Request) {
     try {
@@ -52,16 +54,14 @@ export async function POST(request: Request) {
         };
 
         // Audit this action
-        await db.auditLog.create({
-            data: {
-                organizationId: org.id,
-                userId: user.id,
-                action: "GENERATE_REPORT", // Using existing enum or string
-                status: "SUCCESS",
-                fileName: "mock_audit_report.json",
-                recordCount: 1,
-                metadata: { type: "MOCK_AUDIT" }
-            }
+        await AuditService.log({
+            organizationId: org.id,
+            userId: user.id,
+            action: AuditAction.GENERATE_REPORT,
+            status: AuditStatus.SUCCESS,
+            fileName: "mock_audit_report.json",
+            recordCount: 1,
+            metadata: { type: "MOCK_AUDIT" }
         });
 
         return NextResponse.json(reportData);

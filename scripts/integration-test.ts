@@ -10,7 +10,7 @@ const validRecord: RawPayrollRecord = {
   name: "Integration User",
   basicSalary: 2000,
   currency: "USD",
-  tin: "12345678", // Valid TIN
+  tin: "1234567890", // Valid 10-digit TIN
   isPermanent: true
 };
 
@@ -59,7 +59,7 @@ async function runIntegrationCheck() {
       const xml = generateZimraXml([fullRecord], "Test Corp", "999999");
       
       if (!xml.includes("<NSSA>31.50</NSSA>")) throw new Error("XML missing NSSA value");
-      if (!xml.includes("<TIN>12345678</TIN>")) throw new Error("XML missing TIN");
+      if (!xml.includes("<TIN>1234567890</TIN>")) throw new Error("XML missing TIN");
       console.log("   ✅ XML Generator received calculated data correctly.");
   } catch (e) {
       console.error("   ❌ Document Generation Failed:", e);

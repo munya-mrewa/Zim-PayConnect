@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { generateApiKey } from "@/lib/auth/api-key";
+import { ApiKeyService } from "@/lib/auth/api-key";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Upgrade required" }, { status: 403 });
   }
 
-  const { key, hash, prefix } = generateApiKey();
+  const { key, hashedKey: hash, keyPrefix: prefix } = ApiKeyService.generate();
 
   const newKey = await db.apiKey.create({
     data: {

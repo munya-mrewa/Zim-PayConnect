@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { compare, hash } from "bcryptjs";
 
 import { AuditService } from "@/lib/audit-service";
+import { AuditAction, AuditStatus } from "@prisma/client";
 import { headers } from "next/headers";
 import { requireActiveSubscription } from "@/lib/auth/subscription";
 
@@ -32,19 +33,31 @@ export async function updateOrganization(data: SettingsValues) {
     const headerList = await headers();
     const ip = headerList.get("x-client-ip") || "unknown";
 
-    await AuditService.updateOrganization(
-      session.user.id,
-      session.user.organizationId,
-      {
+    // Perform the database update
+    await db.organization.update({
+      where: { id: session.user.organizationId },
+      data: {
         name,
         tin,
         contactEmail,
         address,
         nssaNumber,
         necNumber,
-      } as any,
-      ip
-    );
+      },
+    });
+
+    // Log the audit event
+    await AuditService.log({
+      organizationId: session.user.organizationId,
+      userId: session.user.id,
+      action: AuditAction.UPDATE_SETTINGS,
+      status: AuditStatus.SUCCESS,
+      metadata: {
+        updatedFields: Object.keys(validatedFields.data),
+        context: "Organization Profile"
+      },
+      ipAddress: ip
+    });
 
     revalidatePath("/settings");
     return { success: "Organization profile updated." };
@@ -82,10 +95,10 @@ export async function updateTaxSettings(data: TaxSettingsValues) {
     const headerList = await headers();
     const ip = headerList.get("x-client-ip") || "unknown";
 
-    await AuditService.updateOrganization(
-      session.user.id,
-      session.user.organizationId,
-      {
+    // Perform the database update
+    await db.organization.update({
+      where: { id: session.user.organizationId },
+      data: {
         defaultCurrency,
         nssaEnabled,
         nssaRate,
@@ -98,9 +111,21 @@ export async function updateTaxSettings(data: TaxSettingsValues) {
         autoUpdateRates: autoUpdateRates ?? false,
         currentExchangeRate: currentExchangeRate ? Number(currentExchangeRate) : undefined,
         accountingFormat: accountingFormat || "STANDARD",
-      } as any,
-      ip
-    );
+      },
+    });
+
+    // Log the audit event
+    await AuditService.log({
+      organizationId: session.user.organizationId,
+      userId: session.user.id,
+      action: AuditAction.UPDATE_SETTINGS,
+      status: AuditStatus.SUCCESS,
+      metadata: {
+        updatedFields: Object.keys(validatedFields.data),
+        context: "Tax Settings"
+      },
+      ipAddress: ip
+    });
 
     revalidatePath("/settings");
     return { success: "Tax configuration updated." };
@@ -154,14 +179,16 @@ export async function updatePassword(data: PasswordChangeValues) {
 
     // 5. Audit
     if (user.organizationId) {
-        await db.auditLog.create({
-            data: {
-                organizationId: user.organizationId,
-                userId: user.id,
-                action: "UPDATE_SETTINGS",
-                status: "SUCCESS",
-                metadata: { type: "PASSWORD_CHANGE" }
-            }
+        const headerList = await headers();
+        const ip = headerList.get("x-client-ip") || "unknown";
+
+        await AuditService.log({
+            organizationId: user.organizationId,
+            userId: user.id,
+            action: AuditAction.UPDATE_SETTINGS,
+            status: AuditStatus.SUCCESS,
+            metadata: { type: "PASSWORD_CHANGE" },
+            ipAddress: ip
         });
     }
 

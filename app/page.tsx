@@ -1,12 +1,15 @@
 import { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { HeroSection } from "@/components/hero-section";
-import { FeatureSection } from "@/components/feature-section";
-import { WorkspaceSection } from "@/components/workspace-section";
-import { TestimonialsSection } from "@/components/testimonials-section";
-import { PricingSection } from "@/components/pricing-section";
 import { siteConfig } from "@/lib/config/site";
+
+// Lazy load below-the-fold components to improve initial page load times
+const FeatureSection = dynamic(() => import("@/components/feature-section").then(mod => mod.FeatureSection));
+const WorkspaceSection = dynamic(() => import("@/components/workspace-section").then(mod => mod.WorkspaceSection));
+const TestimonialsSection = dynamic(() => import("@/components/testimonials-section").then(mod => mod.TestimonialsSection));
+const PricingSection = dynamic(() => import("@/components/pricing-section").then(mod => mod.PricingSection));
 
 export const metadata: Metadata = {
   title: "Ephemeral Engine | ZIMRA TaRMS Payroll Software 2025",

@@ -1,51 +1,91 @@
-import { createHash, randomBytes } from "crypto";
 import { db } from "@/lib/db";
+import { randomBytes, createHash } from "crypto";
 
-export function generateApiKey(): { key: string; hash: string; prefix: string } {
-  const key = `sk_live_${randomBytes(24).toString("hex")}`;
-  const hash = createHash("sha256").update(key).digest("hex");
-  const prefix = key.substring(0, 10); // "sk_live_12"
-  return { key, hash, prefix };
+export interface ApiKeyResult {
+  key: string;
+  keyPrefix: string;
+  hashedKey: string;
 }
 
-export function validateApiKey(key: string, hash: string): boolean {
-  const computedHash = createHash("sha256").update(key).digest("hex");
-  return computedHash === hash;
-}
+export class ApiKeyService {
+  /**
+   * Generates a new API Key.
+   * Format: sk_live_randomString
+   */
+  static generate(): ApiKeyResult {
+    const rawKey = randomBytes(32).toString("hex");
+    const key = `sk_live_${rawKey}`;
+    const keyPrefix = key.slice(0, 10); // "sk_live_12"
+    const hashedKey = createHash("sha256").update(key).digest("hex");
 
-export async function verifyApiKey(token: string) {
-  const hash = createHash("sha256").update(token).digest("hex");
-
-  const apiKey = await db.apiKey.findUnique({
-    where: { hashedKey: hash },
-    include: { organization: true },
-  });
-
-  if (!apiKey) {
-    return { valid: false, error: "Invalid API key" };
+    return { key, keyPrefix, hashedKey };
   }
 
-  if (apiKey.revokedAt) {
-    return { valid: false, error: "API key has been revoked" };
+  /**
+   * Creates a new API Key for an organization.
+   * Returns the plain text key (only once!).
+   */
+  static async createKey(organizationId: string, name: string = "Default Key") {
+    const { key, keyPrefix, hashedKey } = this.generate();
+
+    await db.apiKey.create({
+      data: {
+        organizationId,
+        name,
+        keyPrefix,
+        hashedKey,
+        scopes: ["payroll:write", "payroll:read"], // Default scopes
+      },
+    });
+
+    return key;
   }
 
-  if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
-    return { valid: false, error: "API key has expired" };
+  /**
+   * Validates an API Key and returns the associated organization.
+   * Updates lastUsedAt.
+   */
+  static async validate(key: string) {
+    if (!key.startsWith("sk_live_")) return null;
+
+    const hashedKey = createHash("sha256").update(key).digest("hex");
+
+    const apiKey = await db.apiKey.findUnique({
+      where: { hashedKey },
+      include: { organization: true },
+    });
+
+    if (!apiKey) return null;
+    if (apiKey.revokedAt) return null;
+    if (apiKey.expiresAt && apiKey.expiresAt < new Date()) return null;
+
+    // Async update lastUsedAt (fire and forget to not block)
+    db.apiKey.update({
+      where: { id: apiKey.id },
+      data: { lastUsedAt: new Date() },
+    }).catch(console.error);
+
+    return apiKey.organization;
   }
 
-  // Update last used timestamp asynchronously
-  await db.apiKey.update({
-    where: { id: apiKey.id },
-    data: { lastUsedAt: new Date() },
-  });
-
-  return { valid: true, apiKey, organizationId: apiKey.organizationId };
-}
-
-export function extractBearerToken(req: Request): string | null {
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return null;
+  static async revoke(id: string, organizationId: string) {
+    return await db.apiKey.updateMany({
+      where: { id, organizationId }, // Ensure ownership
+      data: { revokedAt: new Date() },
+    });
   }
-  return authHeader.split(" ")[1];
+
+  static async list(organizationId: string) {
+    return await db.apiKey.findMany({
+      where: { organizationId, revokedAt: null },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        keyPrefix: true,
+        lastUsedAt: true,
+        createdAt: true,
+      },
+    });
+  }
 }

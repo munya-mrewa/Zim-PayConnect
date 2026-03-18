@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
-import { verifyApiKey, extractBearerToken } from "@/lib/auth/api-key";
+import { ApiKeyService } from "@/lib/auth/api-key";
 
 type Handler = (req: Request, ...args: any[]) => Promise<Response>;
+
+export function extractBearerToken(req: Request): string | null {
+  const authHeader = req.headers.get("authorization");
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    return authHeader.split(" ")[1];
+  }
+  return null;
+}
 
 export function withApiKey(handler: Handler): Handler {
   return async (req: Request, ...args: any[]) => {
@@ -14,11 +22,11 @@ export function withApiKey(handler: Handler): Handler {
       );
     }
 
-    const result = await verifyApiKey(token);
+    const organization = await ApiKeyService.validate(token);
 
-    if (!result.valid) {
+    if (!organization) {
       return NextResponse.json(
-        { error: "Unauthorized", message: result.error },
+        { error: "Unauthorized", message: "Invalid or revoked API Key" },
         { status: 401 }
       );
     }
