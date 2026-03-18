@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { HeroSection } from "@/components/hero-section";
 import { FeatureSection } from "@/components/feature-section";
+import { WorkspaceSection } from "@/components/workspace-section";
 import { TestimonialsSection } from "@/components/testimonials-section";
 import { PricingSection } from "@/components/pricing-section";
 import { siteConfig } from "@/lib/config/site";
@@ -125,6 +126,7 @@ export default function LandingPage() {
       <main className="flex-1 pt-16 md:pt-20">
         <HeroSection />
         <FeatureSection />
+        <WorkspaceSection />
         <TestimonialsSection />
         <PricingSection />
       </main>
