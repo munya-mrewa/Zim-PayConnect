@@ -30,7 +30,7 @@ const testimonials = [
     quote:
       "From CSV upload to ZIMRA-ready output in minutes. The dual-currency engine and live tax tables mean we're always compliant. We've reduced reconciliation time by more than half.",
     author: "Farai C.",
-    role: "Group Accountant",
+    role: "Accountant",
     badge: "Enterprise",
     location: "Harare",
   },
