@@ -43,6 +43,9 @@ export function SiteHeader() {
             <Link className="text-zinc-400 hover:text-white transition-colors" href="/about">
               About
             </Link>
+            <Link className="text-zinc-400 hover:text-white transition-colors" href="/paye-calculator">
+              PAYE Calculator
+            </Link>
           </nav>
         </div>
 
@@ -149,6 +152,13 @@ export function SiteHeader() {
               onClick={() => setIsOpen(false)}
             >
               About
+            </Link>
+            <Link
+              href="/paye-calculator"
+              className="text-lg font-medium text-zinc-300 hover:text-white transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              PAYE Calculator
             </Link>
             <div className="h-[1px] bg-white/10 my-2" />
             <Link
