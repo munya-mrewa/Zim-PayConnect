@@ -48,13 +48,13 @@ export function DashboardStats({ subscriptionTier }: DashboardStatsProps) {
           <Settings className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent className="relative space-y-2">
-          <div className="flex items-baseline gap-2">
-            <div className="text-xl md:text-2xl font-bold tracking-tight whitespace-normal">
+          <div className="flex flex-wrap items-baseline gap-2">
+            <div className="text-xl md:text-2xl font-bold tracking-tight whitespace-normal min-w-0">
               {subscriptionTier} Plan
             </div>
             <span
               className={cn(
-                "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase whitespace-nowrap",
+                "rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase whitespace-nowrap shrink-0",
                 subscriptionTier === "MICRO"
                   ? "bg-zinc-800 text-zinc-300"
                   : subscriptionTier === "BUSINESS"
