@@ -20,24 +20,24 @@ export function TrialIndicator({ daysLeft, status, tier }: TrialIndicatorProps) 
 
   return (
     <Card className={cn(
-      "border-l-4 shadow-sm mb-6",
-      isExpired ? "border-l-red-500 bg-red-50/50 dark:bg-red-900/10" : 
-      isUrgent ? "border-l-orange-500 bg-orange-50/50 dark:bg-orange-900/10" : 
-      "border-l-blue-500 bg-blue-50/50 dark:bg-blue-900/10"
+      "border border-zinc-800 border-l-4 shadow-sm mb-6 bg-zinc-900/80 backdrop-blur",
+      isExpired ? "border-l-red-500" : 
+      isUrgent ? "border-l-orange-500" : 
+      "border-l-blue-500"
     )}>
       <CardContent className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             {isExpired ? (
-              <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              <AlertTriangle className="h-5 w-5 text-red-400" />
             ) : (
-              <Clock className={cn("h-5 w-5", isUrgent ? "text-orange-600 dark:text-orange-400" : "text-blue-600 dark:text-blue-400")} />
+              <Clock className={cn("h-5 w-5", isUrgent ? "text-orange-400" : "text-blue-400")} />
             )}
-            <h3 className="font-semibold text-lg">
+            <h3 className="font-semibold text-lg text-zinc-100">
               {isExpired ? "Trial Expired" : "Free Trial Active"}
             </h3>
           </div>
-          <p className="text-muted-foreground max-w-xl">
+          <p className="text-zinc-400 max-w-xl">
             {isExpired 
               ? "Your 7-day free trial has ended. To continue processing payrolls and accessing your reports, please upgrade to a paid plan."
               : `You have ${daysLeft} day${daysLeft === 1 ? '' : 's'} remaining in your free trial. Upgrade now to ensure uninterrupted access.`
