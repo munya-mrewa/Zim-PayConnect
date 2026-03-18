@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, User } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,8 +18,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function SiteHeader() {
   const [isOpen, setIsOpen] = React.useState(false);
-  // Mock logged-in state for now - replace with actual auth logic
-  const isLoggedIn = false; 
+  const { data: session, status } = useSession();
+  const isLoggedIn = status === "authenticated";
 
   return (
     <header className="fixed top-0 z-50 w-full border-b border-white/5 bg-black">
@@ -64,13 +65,16 @@ export function SiteHeader() {
               <DropdownMenuContent className="w-56 bg-zinc-950 border-zinc-800 text-zinc-200" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">User Name</p>
+                    <p className="text-sm font-medium leading-none">{session?.user?.name || "User"}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      user@example.com
+                      {session?.user?.email || ""}
                     </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-zinc-800" />
+                <DropdownMenuItem className="focus:bg-zinc-800 focus:text-white cursor-pointer" asChild>
+                  <Link href="/dashboard">Dashboard</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem className="focus:bg-zinc-800 focus:text-white cursor-pointer">
                   Profile
                 </DropdownMenuItem>
@@ -81,7 +85,10 @@ export function SiteHeader() {
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-zinc-800" />
-                <DropdownMenuItem className="focus:bg-zinc-800 focus:text-white cursor-pointer text-red-500 hover:text-red-400">
+                <DropdownMenuItem 
+                  className="focus:bg-zinc-800 focus:text-white cursor-pointer text-red-500 hover:text-red-400"
+                  onClick={() => signOut({ callbackUrl: '/' })}
+                >
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>

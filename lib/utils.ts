@@ -6,9 +6,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amount: number, currency: "USD" | "ZiG") {
+  if (currency === "ZiG") {
+    return `ZiG ${amount.toLocaleString("en-ZW", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
   return new Intl.NumberFormat("en-ZW", {
     style: "currency",
-    currency: currency === "ZiG" ? "ZWL" : "USD", // ZWL is placeholder for ZiG in some locales
+    currency: "USD",
   }).format(amount);
 }
 

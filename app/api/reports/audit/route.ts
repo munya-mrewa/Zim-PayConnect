@@ -37,20 +37,35 @@ export async function POST(request: Request) {
             }, { status: 403 });
         }
 
-        // Generate Mock Audit Report (Data Logic)
-        // In a real app, this would query historical data and format it like a ZIMRA request.
-        // For now, we return a structured JSON response simulating the report.
+        // Fetch actual audit logs
+        const logs = await AuditService.getLogs(org.id, 1000);
+
+        // Analyze logs to calculate real metrics
+        const totalRuns = logs.filter(l => l.action === 'PROCESS_PAYROLL').length;
+        const failedRuns = logs.filter(l => l.action === 'PROCESS_PAYROLL' && l.status === 'FAILED').length;
         
+        const complianceScore = totalRuns === 0 ? "N/A" : `${Math.round(((totalRuns - failedRuns) / totalRuns) * 100)}%`;
+        
+        const issues = failedRuns > 0 ? [
+            { severity: "HIGH", description: `${failedRuns} failed payroll processing runs detected.` }
+        ] : [
+            { severity: "INFO", description: "All recent payroll runs successful." }
+        ];
+
         const reportData = {
-            reportType: "ZIMRA Mock Audit",
+            reportType: "ZIMRA Audit Report",
             generatedAt: new Date().toISOString(),
             organization: org.name,
             tin: org.tin || "N/A",
-            complianceScore: "98%", // Mock
-            issues: [
-                { severity: "LOW", description: "Missing TIN for 2 employees" },
-                { severity: "INFO", description: "Tax calculation matches latest brackets" }
-            ]
+            complianceScore,
+            issues,
+            recentActivity: logs.map(log => ({
+                action: log.action,
+                status: log.status,
+                date: log.createdAt,
+                user: log.user?.email || "System",
+                details: log.metadata || {}
+            }))
         };
 
         // Audit this action
@@ -59,9 +74,9 @@ export async function POST(request: Request) {
             userId: user.id,
             action: AuditAction.GENERATE_REPORT,
             status: AuditStatus.SUCCESS,
-            fileName: "mock_audit_report.json",
-            recordCount: 1,
-            metadata: { type: "MOCK_AUDIT" }
+            fileName: "audit_report.json",
+            recordCount: logs.length,
+            metadata: { type: "AUDIT_REPORT" }
         });
 
         return NextResponse.json(reportData);

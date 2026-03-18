@@ -1,5 +1,5 @@
 import { RawPayrollRecord, ReconciliationResult } from "./types";
-import { USD_TAX_TABLE_2025, ZIG_TAX_TABLE_2025, NSSA_CONFIG, TaxBracket, AIDS_LEVY_RATE } from "./tax-tables";
+import { USD_TAX_TABLE_2025, ZIG_TAX_TABLE_2025, NSSA_CONFIG, NEC_CONFIG, TaxBracket, AIDS_LEVY_RATE } from "./tax-tables";
 
 // Helper to annualize tax tables
 function annualizeTable(monthlyTable: TaxBracket[]): TaxBracket[] {
@@ -40,12 +40,13 @@ export function reconcileYearEnd(records: RawPayrollRecord[]): ReconciliationRes
       const monthlyCeiling = currency === "USD" ? NSSA_CONFIG.usdCeiling : NSSA_CONFIG.zigCeiling;
       const annualCeiling = monthlyCeiling * 12;
       const nssaInsurable = Math.min(gross, annualCeiling);
-      const annualNssa = nssaInsurable * NSSA_CONFIG.rate;
+      const annualNssa = record.isPermanent ? nssaInsurable * NSSA_CONFIG.rate : 0;
 
-      // 2. Determine Taxable Income (Assuming NEC is handled or negligible for this mock)
-      // For accurate FDS, we should deduct NEC if applicable. 
-      // We'll stick to NSSA deduction for the MVP Reconciliation.
-      const annualTaxable = gross - annualNssa;
+      // 1.b. Calculate Annual NEC
+      const annualNec = record.isPermanent ? gross * NEC_CONFIG.rate : 0;
+
+      // 2. Determine Taxable Income
+      const annualTaxable = gross - annualNssa - annualNec;
 
       // 3. Calculate Correct Annual Tax
       const table = currency === "USD" ? ANNUAL_USD_TABLE : ANNUAL_ZIG_TABLE;
