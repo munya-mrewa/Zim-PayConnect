@@ -149,6 +149,7 @@ export async function POST(request: Request) {
         auditId: auditLog.id,
         removeBranding: isWhiteLabeled,
         metadata: {
+            userId: user.id, // Pass User ID for analytics
             startTime: new Date().toISOString(),
             requestStart: startTime,
             method: access.method,

@@ -68,9 +68,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark scroll-smooth">
       <body className={cn(inter.className, "bg-black text-white antialiased")}>
-        <PHProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </PHProvider>
+        <AuthProvider>
+          <PHProvider>{children}</PHProvider>
+        </AuthProvider>
         <PWARegister />
       </body>
     </html>
