@@ -31,6 +31,9 @@ export function SiteHeader() {
             <Link className="text-zinc-400 hover:text-white transition-colors" href="/#features">
               Features
             </Link>
+            <Link className="text-zinc-400 hover:text-white transition-colors" href="/#testimonials">
+              Testimonials
+            </Link>
             <Link className="text-zinc-400 hover:text-white transition-colors" href="/#pricing">
               Pricing
             </Link>
@@ -115,6 +118,13 @@ export function SiteHeader() {
               onClick={() => setIsOpen(false)}
             >
               Features
+            </Link>
+            <Link
+              href="/#testimonials"
+              className="text-lg font-medium text-zinc-300 hover:text-white transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              Testimonials
             </Link>
             <Link
               href="/#pricing"
