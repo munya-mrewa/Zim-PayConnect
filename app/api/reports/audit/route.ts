@@ -41,8 +41,8 @@ export async function POST(request: Request) {
         const logs = await AuditService.getLogs(org.id, 1000);
 
         // Analyze logs to calculate real metrics
-        const totalRuns = logs.filter(l => l.action === 'PROCESS_PAYROLL').length;
-        const failedRuns = logs.filter(l => l.action === 'PROCESS_PAYROLL' && l.status === 'FAILED').length;
+        const totalRuns = logs.filter(l => l.action === 'UPLOAD_PAYROLL').length;
+        const failedRuns = logs.filter(l => l.action === 'UPLOAD_PAYROLL' && l.status === 'FAILURE').length;
         
         const complianceScore = totalRuns === 0 ? "N/A" : `${Math.round(((totalRuns - failedRuns) / totalRuns) * 100)}%`;
         

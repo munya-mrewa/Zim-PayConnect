@@ -17,10 +17,7 @@ export function SiteFooter() {
           </p>
         </div>
         <div className="flex gap-6">
-           <Link href="/pay-per-process" className="text-sm font-medium text-zinc-500 hover:text-white transition-colors underline-offset-4 hover:underline">Pay Per Process</Link>
-           <Link href="/paye-calculator" className="text-sm font-medium text-zinc-500 hover:text-white transition-colors underline-offset-4 hover:underline">PAYE Calculator</Link>
-           <Link href="/terms" className="text-sm font-medium text-zinc-500 hover:text-white transition-colors underline-offset-4 hover:underline">Terms</Link>
-           <Link href="/privacy" className="text-sm font-medium text-zinc-500 hover:text-white transition-colors underline-offset-4 hover:underline">Privacy</Link>
+           <Link href="/terms" className="text-sm font-medium text-zinc-500 hover:text-white transition-colors underline-offset-4 hover:underline">Terms</Link>           <Link href="/privacy" className="text-sm font-medium text-zinc-500 hover:text-white transition-colors underline-offset-4 hover:underline">Privacy</Link>
         </div>
       </div>
       <div className="container border-t border-zinc-800 py-6 text-center text-xs text-zinc-600">

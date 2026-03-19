@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SUBSCRIPTION_PLANS, SubscriptionPlanId } from "@/lib/config/pricing";
+import { SUBSCRIPTION_PLANS, SubscriptionPlanId, PAY_PER_PROCESS_COST } from "@/lib/config/pricing";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Loader2 } from "lucide-react";
@@ -9,9 +9,10 @@ import { Check, Loader2 } from "lucide-react";
 export function PricingPlans() {
   const [loading, setLoading] = useState<string | null>(null);
 
-  const handlePurchase = async (item: { tierId: SubscriptionPlanId }) => {
+  const handlePurchase = async (item: { tierId?: SubscriptionPlanId, type?: 'CREDIT', amount?: number }) => {
+    const loadingKey = item.type === 'CREDIT' ? 'CREDIT' : item.tierId!;
     try {
-      setLoading(item.tierId);
+      setLoading(loadingKey);
       const response = await fetch("/api/pesepay", {
         method: "POST",
         headers: {
@@ -39,6 +40,55 @@ export function PricingPlans() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Pay-As-You-Go Card */}
+       <Card className="flex flex-col border-dashed border-2 border-primary/50 bg-primary/5">
+          <CardHeader>
+            <CardTitle>Pay As You Go</CardTitle>
+            <CardDescription>
+              Perfect for one-off reports without commitment.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1">
+            <div className="text-3xl font-bold mb-4">
+              ${PAY_PER_PROCESS_COST}
+              <span className="text-sm font-normal text-muted-foreground">
+                /report
+              </span>
+            </div>
+            <ul className="space-y-2 text-sm">
+                <li className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  Single Report Generation
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  Instant Access
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  No Subscription Required
+                </li>
+            </ul>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              className="w-full" 
+              variant="outline"
+              onClick={() => handlePurchase({ type: 'CREDIT', amount: 1 })}
+              disabled={loading !== null}
+            >
+              {loading === 'CREDIT' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                "Buy 1 Credit"
+              )}
+            </Button>
+          </CardFooter>
+        </Card>
+
       {SUBSCRIPTION_PLANS.map((plan) => (
         <Card key={plan.id} className="flex flex-col">
           <CardHeader>

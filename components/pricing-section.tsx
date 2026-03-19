@@ -3,11 +3,10 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Loader2, ArrowRight, Zap } from "lucide-react";
-import { SUBSCRIPTION_PLANS, SubscriptionPlan, PAY_PER_PROCESS_COST } from "@/lib/config/pricing";
+import { Check, Loader2 } from "lucide-react";
+import { SUBSCRIPTION_PLANS, SubscriptionPlan } from "@/lib/config/pricing";
 import posthog from "posthog-js";
 
 interface PricingSectionProps {
@@ -152,34 +151,6 @@ export function PricingSection({ isTrial = false }: PricingSectionProps) {
               </CardFooter>
             </Card>
           ))}
-        </div>
-
-        {/* Pay-Per-Process alternative */}
-        <div className="mt-16 pt-12 border-t border-zinc-800/60">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 max-w-3xl mx-auto">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-zinc-900 border border-zinc-800 ring-1 ring-white/5 flex items-center justify-center shrink-0">
-                <Zap className="h-5 w-5 text-amber-400" />
-              </div>
-              <div>
-                <p className="text-white font-semibold">
-                  Just need a single report?
-                </p>
-                <p className="text-zinc-500 text-sm">
-                  Process one full payroll batch for ${PAY_PER_PROCESS_COST} — no subscription needed.
-                </p>
-              </div>
-            </div>
-            <Link href="/pay-per-process">
-              <Button
-                variant="outline"
-                className="border-zinc-700 hover:border-white/50 text-zinc-300 hover:text-white whitespace-nowrap"
-              >
-                Pay Per Process
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
         </div>
       </div>
     </section>

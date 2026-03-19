@@ -47,9 +47,6 @@ export function SiteHeader() {
             <Link className="text-zinc-400 hover:text-white transition-colors" href="/paye-calculator">
               PAYE Calculator
             </Link>
-            <Link className="text-zinc-400 hover:text-white transition-colors" href="/pay-per-process">
-              Pay Per Process
-            </Link>
           </nav>
         </div>
 
@@ -162,13 +159,6 @@ export function SiteHeader() {
               onClick={() => setIsOpen(false)}
             >
               About
-            </Link>
-            <Link
-              href="/pay-per-process"
-              className="text-lg font-medium text-zinc-300 hover:text-white transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              Pay Per Process
             </Link>
             <Link
               href="/paye-calculator"
