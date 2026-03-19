@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 const rateLimitMap = new Map<string, { count: number; expiresAt: number }>();
 const MAX_REQUESTS_PER_MINUTE = 100;
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
   // --- Logic from proxy.ts (Rate Limiting & Auth) ---
