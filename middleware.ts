@@ -3,7 +3,7 @@ import { getToken } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
 
 const rateLimitMap = new Map<string, { count: number; expiresAt: number }>();
-const MAX_REQUESTS_PER_MINUTE = 100;
+const MAX_REQUESTS_PER_MINUTE = 10000;
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;

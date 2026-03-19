@@ -1,0 +1,108 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - link "Zim-PayConnect" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: Zim-PayConnect
+      - navigation [ref=e8]:
+        - link "Overview" [ref=e9] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e10]
+          - text: Overview
+        - link "Clients" [ref=e15] [cursor=pointer]:
+          - /url: /clients
+          - img [ref=e16]
+          - text: Clients
+        - link "Upload Payroll" [ref=e20] [cursor=pointer]:
+          - /url: /upload
+          - img [ref=e21]
+          - text: Upload Payroll
+        - link "Tax Calculator" [ref=e24] [cursor=pointer]:
+          - /url: /calculator
+          - img [ref=e25]
+          - text: Tax Calculator
+        - link "History" [ref=e27] [cursor=pointer]:
+          - /url: /history
+          - img [ref=e28]
+          - text: History
+        - link "Settings" [ref=e32] [cursor=pointer]:
+          - /url: /settings
+          - img [ref=e33]
+          - text: Settings
+      - button "Sign Out" [ref=e38] [cursor=pointer]:
+        - img [ref=e39]
+        - text: Sign Out
+    - generic [ref=e42]:
+      - banner [ref=e43]:
+        - button "Toggle user menu" [ref=e45] [cursor=pointer]:
+          - img [ref=e46]
+          - generic [ref=e49]: Toggle user menu
+      - main [ref=e50]:
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - heading "Upload Payroll" [level=2] [ref=e53]
+            - button "Download Sample CSV" [ref=e54] [cursor=pointer]:
+              - img [ref=e55]
+              - text: Download Sample CSV
+          - generic [ref=e58]:
+            - generic [ref=e59]:
+              - generic [ref=e60]:
+                - heading "Select File" [level=3] [ref=e61]
+                - paragraph [ref=e62]: Upload your payroll CSV file for background processing.
+              - generic [ref=e63]:
+                - generic [ref=e64]:
+                  - generic [ref=e65]: Processing Month
+                  - combobox "Processing Month" [ref=e66]:
+                    - option "January"
+                    - option "February"
+                    - option "March" [selected]
+                    - option "April"
+                    - option "May"
+                    - option "June"
+                    - option "July"
+                    - option "August"
+                    - option "September"
+                    - option "October"
+                    - option "November"
+                    - option "December"
+                - generic [ref=e67]:
+                  - generic [ref=e68]: Payroll CSV
+                  - button "Payroll CSV" [ref=e69]
+                - button "Process Payroll" [active] [ref=e70] [cursor=pointer]:
+                  - img [ref=e71]
+                  - text: Process Payroll
+              - generic [ref=e74]:
+                - generic [ref=e75]:
+                  - img [ref=e76]
+                  - generic [ref=e79]: Ephemeral Compliance Mode
+                - paragraph [ref=e80]: Your data is processed in isolated memory. No employee names or salaries are stored in our persistent database. ZIP outputs are encrypted and purged after 24 hours.
+                - link "View Security & Privacy Whitepaper" [ref=e81] [cursor=pointer]:
+                  - /url: /security
+                  - text: View Security & Privacy Whitepaper
+                  - img [ref=e82]
+            - generic [ref=e87]:
+              - generic [ref=e88]:
+                - img [ref=e89]
+                - heading "Processing Failed" [level=3] [ref=e91]
+              - generic [ref=e92]:
+                - paragraph [ref=e93]: "Server error: 429"
+                - button "Try Again" [ref=e94] [cursor=pointer]
+    - generic [ref=e95]:
+      - button [ref=e96] [cursor=pointer]:
+        - img [ref=e97]
+      - generic:
+        - generic:
+          - heading "Share Feedback" [level=3]
+          - generic: Directly to Slack
+        - generic:
+          - generic:
+            - textbox "What can we improve? Encountered a bug?"
+          - button "Send Feedback" [disabled]:
+            - img
+            - text: Send Feedback
+          - paragraph: Your message, name, and current page URL will be sent to our support channel.
+  - alert [ref=e99]
+```

@@ -7,6 +7,9 @@ test.describe('Critical Flow: Register -> Upload -> Download', () => {
   const testPassword = 'Password123!';
 
   test('User can register, login, upload payroll, and see history', async ({ page }) => {
+    // Capture console logs
+    page.on('console', msg => console.log('BROWSER CONSOLE:', msg.text()));
+
     // 1. Register
     await page.goto('/register');
     await page.getByLabel('Full Name').fill('Test User');
@@ -14,6 +17,12 @@ test.describe('Critical Flow: Register -> Upload -> Download', () => {
     await page.getByLabel('Organization Name').fill('Test Organization');
     await page.getByLabel('Password').fill(testPassword);
     await page.getByRole('button', { name: 'Register' }).click();
+
+    // Check for validation errors
+    const errorMessages = await page.locator('.text-red-500').allTextContents();
+    if (errorMessages.length > 0) {
+        console.error("Validation errors found:", errorMessages);
+    }
 
     // Check for error message if redirect doesn't happen immediately
     const errorAlert = page.locator('.bg-red-100');

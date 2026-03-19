@@ -32,9 +32,9 @@ test.describe('Upload limits: no subscription and no credits', () => {
     await db.organization.update({
       where: { id: user.organization.id },
       data: {
-        subscriptionStatus: 'TRIAL',
+        subscriptionStatus: 'CANCELLED',
         trialEndsAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // yesterday
-        subscriptionEndsAt: null,
+        subscriptionEndsAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // yesterday
         credits: 0,
       },
     });

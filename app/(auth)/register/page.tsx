@@ -48,10 +48,12 @@ function RegisterForm() {
   });
 
   const onSubmit = async (data: RegisterFormValues) => {
+    console.log("onSubmit triggered with data:", data);
     setLoading(true);
     setError(null);
 
     try {
+      console.log("Sending fetch to /api/register");
       const response = await fetch("/api/register", {
         method: "POST",
         headers: {
@@ -59,14 +61,18 @@ function RegisterForm() {
         },
         body: JSON.stringify({ ...data, plan: planId }),
       });
+      console.log("Response status:", response.status);
 
       if (!response.ok) {
         const result = await response.json();
+        console.error("API error result:", result);
         throw new Error(result.message || "Registration failed");
       }
 
+      console.log("Redirecting to login");
       router.push("/login?registered=true");
     } catch (err: any) {
+      console.error("Caught error in onSubmit:", err);
       setError(err.message);
     } finally {
       setLoading(false);
